@@ -1,0 +1,96 @@
+/* ====================================================================
+   📦 views/Login.vue (PARTE 1: ESTRUCTURA GENERAL DE LA TARJETA)
+   ==================================================================== */
+
+.contenedor-login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+
+.tarjeta-autenticacion {
+  background: var(--blanco-puro);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(13, 148, 136, 0.1);
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid var(--borde-suave);
+  box-sizing: border-box;
+}
+
+/* ====================================================================
+   🚀 ENCABEZADO CLÍNICO CON LOGOTIPO VECTORIAL CORPORATIVO
+   ==================================================================== */
+.encabezado-clinico {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Reducción equilibrada del logotipo institucional */
+.logo-institucional-login {
+  width: 90px;            /* Tamaño controlado y discreto */
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 16px;
+  /* Sombra proyectada para dar volumen sobre el fondo blanco */
+  filter: drop-shadow(0px 4px 6px rgba(15, 23, 42, 0.08));
+}
+
+.titulo-establecimiento {
+  color: #115e59;          /* Verde quirúrgico coincidente con tu Navbar */
+  font-size: 1.45rem;
+  margin: 0 0 6px 0;
+  font-weight: 800;        /* Realce tipográfico de alta presencia */
+  letter-spacing: -0.3px;
+}
+/* ====================================================================
+   🌟 views/Login.vue (PARTE 2: TEXTOS DE CONTROL Y FORMULARIO)
+   ==================================================================== */
+
+/* Estilo mejorado y modernizado para el título de inicio de sesión */
+.etiqueta-sistema {
+  color: var(--texto-secundario);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;   /* Espaciado expandido corporativo */
+  text-transform: uppercase;
+  margin: 0;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9; /* Línea divisoria muy tenue */
+  width: 65%;              /* Ancho controlado del filete */
+}
+
+.formulario-acceso {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.grupo-entrada {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.grupo-entrada label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--texto-base);
+}
+
+/* Animación por hardware para la espera asíncrona */
+.spinner {
+  display: inline-block;
+  animation: girar 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes girar {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

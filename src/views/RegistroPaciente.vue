@@ -1,0 +1,247 @@
+<template>
+  <div class="registro-contenedor">
+    <header class="registro-header">
+      <h2>Inscripción Centralizada de Pacientes (CU-002)</h2>
+      <p>Alta de perfiles ciudadanos en la Red Nacional de Salud.</p>
+    </header>
+
+    <!-- Notificaciones y Alertas Dinámicas del Sistema -->
+    <div v-if="notificacion.texto" :class="['notificacion', notificacion.tipo]">
+      {{ notificacion.texto }}
+    </div>
+
+    <form @submit.prevent="procesarRegistroPaciente" class="formulario-registro">
+      
+      <!-- SUBFORMULARIO 1: IDENTIFICACIÓN DEMOGRÁFICA -->
+      <fieldset>
+        <legend>👤 Antecedentes de Identidad</legend>
+        <div class="grilla-formulario">
+          <div class="campo-entrada">
+            <label>RUT Nacional</label>
+            <input type="text" v-model="paciente.rut" placeholder="12345678-9" required :disabled="guardando" />
+          </div>
+          <div class="campo-entrada">
+            <label>Nombre Completo</label>
+            <input type="text" v-model="paciente.nombre" placeholder="Juan Carlos Pérez" required :disabled="guardando" />
+          </div>
+          <div class="campo-entrada">
+            <label>Fecha de Nacimiento</label>
+            <input type="date" v-model="paciente.fecha_nacimiento" required :disabled="guardando" />
+          </div>
+          <div class="campo-entrada">
+            <label>Centro de Salud de Origen</label>
+            <select v-model="paciente.centro_salud_id" required :disabled="guardando">
+              <option value="" disabled selected>Seleccione establecimiento...</option>
+              <option v-for="centro in centros" :key="centro._id" :value="centro._id">
+                {{ centro.nombre_centro }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- SUBFORMULARIO 2: UBICACIÓN GEOGRÁFICA ADAPTATIVA -->
+      <fieldset>
+        <legend>Coordenadas de Residencia</legend>
+        
+        <!-- FLUJO EXCLUSIVO PARA MÉDICOS: Formulario completo de Dirección Nueva -->
+        <div v-if="authStore.obtenerRol === 'medico'" class="grilla-formulario">
+          <div class="campo-entrada">
+            <label>Calle / Avenida</label>
+            <input type="text" v-model="direccion.calle" placeholder="Avenida Arturo Prat" required :disabled="guardando" />
+          </div>
+          <div class="campo-entrada">
+            <label>Número / Block / Depto</label>
+            <input type="text" v-model="direccion.numero" placeholder="1040-B o S/N" required :disabled="guardando" />
+          </div>
+          <div class="campo-entrada">
+            <label>Comuna</label>
+            <input type="text" v-model="direccion.comuna" placeholder="La Serena" required :disabled="guardando" />
+          </div>
+          <div class="campo-entrada">
+            <label>Ciudad</label>
+            <input type="text" v-model="direccion.ciudad" placeholder="Coquimbo" required :disabled="guardando" />
+          </div>
+        </div>
+
+        <!-- FLUJO EXCLUSIVO PARA ADMINISTRADORES: Vinculación relacional directa -->
+        <div v-else class="campo-entrada unica-columna">
+          <label>ID de Dirección Preexistente (Mongoose ObjectId)</label>
+          <input 
+            type="text" 
+            v-model="paciente.direccion_id" 
+            placeholder="Ej: 64b2f1a8e4b0c23a88f12345" 
+            required 
+            :disabled="guardando"
+          />
+          <p class="nota-administrativa">
+            Su rol operativo requiere la vinculación de un registro domiciliario previamente validado en la red nacional.
+          </p>
+        </div>
+      </fieldset>
+
+      <div class="acciones-formulario">
+        <button type="submit" class="btn-registro-enviar" :disabled="guardando">
+          {{ guardando ? 'Sincronizando Expediente...' : 'Inscribir Paciente en Sistema' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</template>
+
+
+
+
+<!-- views/RegistroPaciente.vue (SCRIPT SETUP - CORREGIDO) -->
+<script setup>
+import { ref, reactive, onMounted } from 'vue';
+import { useAuthStore } from '../stores/auth.js';
+
+const authStore = useAuthStore();
+
+const guardando = ref(false);
+const centros = ref([]);
+const notificacion = reactive({ texto: '', tipo: '' });
+
+// Modelo reactivo estructurado para el esquema del Paciente
+const paciente = reactive({
+  rut: '',
+  nombre: '',
+  fecha_nacimiento: '',
+  direccion_id: '',
+  centro_salud_id: ''
+});
+
+// Modelo reactivo para el esquema aislado de la Dirección (Mapea 'ciudad')
+const direccion = reactive({
+  calle: '',
+  numero: '',
+  comuna: '',
+  ciudad: ''
+});
+
+// Temporizador interno para desvanecer las notificaciones efímeras
+let timeoutAlerta = null;
+
+const lanzarAlertaLocal = (texto, tipo) => {
+  if (timeoutAlerta) clearTimeout(timeoutAlerta);
+  notificacion.texto = texto;
+  notificacion.tipo = tipo;
+  
+  timeoutAlerta = setTimeout(() => {
+    notificacion.texto = '';
+    notificacion.tipo = '';
+  }, 4000); // 4 segundos en pantalla y se desvanece solo
+};
+
+// FUNCIÓN DE SANITIZACIÓN MAESTRA DEL RUT: Fuerza el formato XXXXXXXX-X, insertando el guion por software
+const limpiarRutInscripcion = (rutRaw) => {
+  if (!rutRaw) return '';
+  let limpio = rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (limpio.length < 2) return limpio;
+  const cuerpo = limpio.slice(0, -1);
+  const dv = limpio.slice(-1);
+  return `${cuerpo}-${dv}`; // Estandarizado de forma estricta
+};
+
+// Consumo nativo mediante Fetch al inicializar para rellenar los establecimientos
+onMounted(async () => {
+  try {
+    const respuesta = await authStore.fetchSeguro('/centros-salud');
+    if (respuesta && respuesta.ok) {
+      centros.value = await respuesta.json();
+    }
+  } catch (error) {
+    console.error('❌ Error al poblar catálogo asistencial:', error.message);
+  }
+});
+
+// Despacho controlado en cascada hacia /api/direcciones y /api/pacientes
+const procesarRegistroPaciente = async () => {
+  guardando.value = true;
+  notificacion.texto = '';
+
+  try {
+    let direccionIdFinal = paciente.direccion_id;
+
+    // PASO 1: Si el usuario es médico, ejecuta la persistencia intermedia de la dirección residencial
+    if (authStore.obtenerRol === 'medico') {
+      const resDireccion = await authStore.fetchSeguro('/direcciones', {
+        method: 'POST',
+        body: JSON.stringify({
+          calle: direccion.calle.trim(),
+          numero: direccion.numero.trim(),
+          comuna: direccion.comuna.trim(),
+          ciudad: direccion.ciudad.trim()
+        })
+      });
+
+      if (!resDireccion) return; // Detención si falló la sesión
+      
+      // 🚀 CORRECCIÓN: Consumimos el JSON una única vez en una variable para evitar el crash del body stream
+      const datosDireccion = await resDireccion.json();
+
+      if (!resDireccion.ok) {
+        throw new Error(datosDireccion.msg || 'Falla crítica al registrar la dirección residencial.');
+      }
+
+      direccionIdFinal = datosDireccion.direccion?._id || datosDireccion.direccion?.id; // Captura el ID real de Atlas
+    }
+
+    // PASO 2: Construcción del payload final e inyección de relación relacional
+    const payloadFinal = {
+      rut: limpiarRutInscripcion(paciente.rut), // Fuerza el RUT limpio con guion antes de viajar por red
+      nombre: paciente.nombre.trim(),
+      fecha_nacimiento: paciente.fecha_nacimiento,
+      centro_salud_id: paciente.centro_salud_id,
+      direccion_id: direccionIdFinal
+    };
+
+    const resPaciente = await authStore.fetchSeguro('/pacientes', {
+      method: 'POST',
+      body: JSON.stringify(payloadFinal)
+    });
+
+    if (!resPaciente) return; 
+
+    const datosPaciente = await resPaciente.json();
+
+    if (!resPaciente.ok) {
+      throw new Error(datosPaciente.msg || 'Falla crítica al registrar la inscripción demográfica.');
+    }
+
+    // 🚀 CORRECCIÓN UX: Removemos el alert() invasivo y pasamos el mensaje a la alerta reactiva unificada
+    lanzarAlertaLocal(datosPaciente.msg || 'Paciente inscrito exitosamente en la Red Nacional.', 'exito');
+
+    // Limpieza atómica y reactiva de campos tras guardar con éxito
+    Object.keys(paciente).forEach(key => paciente[key] = '');
+    Object.keys(direccion).forEach(key => direccion[key] = '');
+
+  } catch (error) {
+    lanzarAlertaLocal(error.message, 'error');
+  } finally {
+    // 🚀 CORRECCIÓN DE SINTAXIS: Cambiado 'bits' por 'finally' para corregir la línea en rojo de VS Code
+    guardando.value = false;
+  }
+};
+</script>
+
+
+<style scoped>
+/* Estilos locales complementarios para empaquetar el alta de pacientes */
+.acciones-formulario {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.btn-registro-enviar {
+  width: auto;
+  padding: 13px 30px;
+}
+.nota-administrativa {
+  font-size: 0.8rem;
+  color: var(--texto-secundario);
+  margin-top: 6px;
+  font-style: italic;
+}
+</style>

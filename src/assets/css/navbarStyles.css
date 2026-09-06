@@ -1,0 +1,277 @@
+/* ====================================================================
+   📦 navbarStyles.css - PARTE 1: INFRAESTRUCTURA BASE Y MENÚS
+   ==================================================================== */
+
+/* Maquetación general fluida: Ocupa de extremo a extremo el monitor */
+.barra-navegacion {
+  background-color: #115e59; /* Verde quirúrgico institucional */
+  color: #ffffff;
+  padding: 0 40px; /* Relleno generoso y simétrico para los bordes laterales */
+  height: 70px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.contenedor-nav {
+  display: flex;
+  justify-content: flex-start; /* Alinea los elementos correlativamente desde la izquierda */
+  align-items: center;
+  height: 100%;
+  max-width: 100%; /* Rompe cualquier tope estático de cajas */
+  width: 100%;
+}
+
+/* Realce estético de la marca en Celeste Cian Premium */
+.marca-sistema {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.marca-sistema:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.texto-logo {
+  font-weight: 800; /* Tipografía ultra-negrita de presencia */
+  font-size: 1.2rem;
+  letter-spacing: 0.7px;
+  white-space: nowrap;
+}
+
+.texto-logo.tipo-clinico {
+  color: #22d3ee; /* Celeste cian brillante de alta definición visual */
+  text-shadow: 0px 2px 4px rgba(6, 182, 212, 0.3);
+}
+
+/* Menú central de opciones Vue Router con aire espaciado */
+.enlaces-navegacion {
+  display: flex;
+  gap: 16px; /* Holgura simétrica entre los botones de navegación */
+  align-items: center;
+  margin-left: 45px; /* Distancia geométrica limpia tras la marca */
+}
+
+.enlace-nav {
+  color: #ccfbf1; /* Tono turquesa claro para descanso visual */
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+}
+
+.enlace-nav:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.enlace-nav.activo {
+  color: #ffffff;
+  background-color: #0d9488; /* Fondo destacado activo */
+}
+
+
+
+
+/* ====================================================================
+   📦 navbarStyles.css - PARTE 2: BLOQUE DE SESIÓN Y APILAMIENTO VERTICAL
+   ==================================================================== */
+
+/* Empuje elástico hacia el perímetro derecho del navegador */
+.perfil-sesion-extremo {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* Separación fija elegante entre los textos y el botón de salida */
+  /* ⚡ CLÁUSULA INGENIERIL CRÍTICA: Absorbe todo el espacio remanente horizontal,
+     empujando a las identidades y al botón juntos de forma balanceada a la derecha */
+  margin-left: auto !important; 
+  white-space: nowrap;
+}
+
+/* Caja de dos niveles: Apila el reloj arriba y el funcionario abajo */
+.caja-vertical-credenciales {
+  display: flex;
+  flex-direction: column; /* Alineación vertical estricta */
+  align-items: flex-end;   /* Justifica el bloque ordenadamente a la derecha */
+  gap: 4px;                /* Distancia simétrica entre ambas filas de texto */
+}
+
+/* Fila Superior: Métrica del temporizador forzada a una única línea horizontal */
+.temporizador-seguridad {
+  display: flex;
+  flex-direction: row !important; /* Fuerza el sentido de fila continua anulando herencias */
+  align-items: center !important;
+  gap: 6px; /* Separación entre la etiqueta informativa y el reloj digital */
+  font-family: monospace;
+}
+
+.reloj-icono {
+  font-size: 0.68rem;
+  color: #99f6e4;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.tiempo-restante {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #38bdf8; /* Celeste de alta visibilidad forense */
+}
+
+.tiempo-restante.alerta-critica {
+  color: #f97316; /* Cambio a naranja preventivo a los 30 min */
+}
+
+/* Fila Inferior: Contenedor demográfico lineal del funcionario */
+.info-usuario-lineal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nombre-medico-nav {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.separador-nav {
+  color: #99f6e4;
+  opacity: 0.5;
+  font-weight: 700;
+}
+
+.rol-medico-nav {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #99f6e4;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Botón Cerrar Sesión en tono Gris Pizarra Formal */
+.boton-cerrar-sesion {
+  background-color: #475569 !important; /* Gris pizarra suave corporativo */
+  color: #ffffff !important;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  width: auto;
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease !important;
+}
+
+/* El botón muta a rojo de advertencia únicamente ante la intención de salida */
+.boton-cerrar-sesion:hover {
+  background-color: #ef4444 !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.boton-cerrar-sesion:active {
+  transform: scale(0.96) !important;
+}
+
+
+
+
+/* ====================================================================
+   📦 navbarStyles.css - PARTE 3: MODALES, INTEROPERABILIDAD Y RESPONSIVO
+   ==================================================================== */
+
+/* Ventana emergente por inactividad clínico (Métrica RNF-001) */
+.modal-sobrecapa-seguridad {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-ventana-seguridad {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 8px;
+  max-width: 460px;
+  width: calc(100% - 40px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.modal-cabecera-alerta { display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #fff7ed; padding-bottom: 12px; margin-bottom: 16px; }
+.modal-cabecera-alerta span { font-size: 1.6rem; }
+.modal-cabecera-alerta h4 { color: #c2410c; font-size: 1.15rem; font-weight: 700; }
+.modal-cuerpo-alerta p { margin: 0 0 12px 0; font-size: 0.9rem; color: #334155; line-height: 1.5; }
+.texto-cuenta-regresiva { background-color: #fff7ed; padding: 10px 14px; border-radius: 4px; color: #ea580c; font-size: 0.95rem; border: 1px solid #ffedd5; font-family: monospace; }
+.nota-legal { font-size: 0.78rem !important; color: #64748b; font-style: italic; margin-top: 15px !important; }
+.modal-acciones-alerta { display: flex; justify-content: flex-end; gap: 12px; margin-top: 25px; }
+.btn-extender-activo { background-color: #0d9488; color: #ffffff; border: none; padding: 10px 20px; font-size: 0.85rem; font-weight: 600; border-radius: 4px; cursor: pointer; transition: background-color 0.2s ease; width: auto; }
+.btn-extender-activo:hover { background-color: #115e59; }
+.btn-abortar-activo { background-color: #ffffff; color: #64748b; border: 1px solid #cbd5e1; padding: 10px 18px; font-size: 0.85rem; font-weight: 600; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; width: auto; }
+.btn-abortar-activo:hover { background-color: #f1f5f9; color: #334155; }
+.animate-scale { animation: modalScale 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes modalScale { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* Cintillo Dinámico de Notificaciones de la Pasarela HL7 FHIR */
+.cintillo-alerta-interop {
+  width: 100%;
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-sizing: border-box;
+  animation: slideDownQuirurgico 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-bottom: 2px solid transparent;
+}
+
+.cintillo-alerta-interop p { margin: 0; line-height: 1.4; }
+.cintillo-alerta-interop.info { background-color: #ecfeff; color: #0891b2; border-color: #a5f3fc; }
+.cintillo-alerta-interop.success { background-color: #f0fff4; color: #16a34a; border-color: #bbf7d0; }
+.cintillo-alerta-interop.error { background-color: #fff5f5; color: #e11d48; border-color: #fecdd3; }
+@keyframes slideDownQuirurgico { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* 📱 ADAPTACIÓN RESPONSIVA MEDIBLE (OBSERVACIÓN 6 DE LA COMISIÓN) */
+@media (max-width: 920px) {
+  .barra-navegacion { height: auto; padding: 12px 20px; }
+  .contenedor-nav { flex-direction: column; gap: 12px; align-items: center; }
+  .perfil-sesion-extremo { width: 100%; justify-content: center; gap: 25px; border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 10px; margin-left: 0; }
+  .caja-vertical-credenciales { align-items: center !important; }
+  .boton-cerrar-sesion { width: 100%; text-align: center; margin-left: 0 !important; margin-top: 5px; }
+  .temporizador-seguridad { flex-direction: column !important; align-items: center !important; }
+}
+@media (max-width: 600px) {
+  .enlaces-navegacion { flex-direction: column; width: 100%; gap: 6px; margin-left: 0; }
+  .enlace-nav { width: 100%; text-align: center; box-sizing: border-box; }
+}
+
+
+
+
+
+
+

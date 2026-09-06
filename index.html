@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- PRIVACIDAD MÁXIMA: Bloquea la indexación en Google y motores públicos -->
+    <meta name="robots" content="noindex, nofollow"> <!-- esta meta se encarga de bloquear la indexación en buscadores -->
+    <meta name="googlebot" content="noindex, nofollow"> <!-- Le dice al robot de Google (Googlebot) que no incluya esa página en el índice de Google. -->
+    <meta http-equiv="Pragma" content="no-cache"> <!-- Le dice al navegador que no guarde en caché la página. -->
+
+
+    <!-- DESCRIPCIÓN INSTITUCIONAL -->
+    <meta name="description" content="Plataforma centralizada para la gestión e inscripción del Historial Clínico Nacional de Pacientes. Acceso restringido a personal acreditado.">
+    <meta name="author" content="claudio_estay">
+    <meta name="theme-color" content="#0284c7"> <!-- Color temático clínico para navegadores móviles -->
+
+    <!-- OPTIMIZACIÓN DE RED: Preconexión anticipada al dominio de tu API de Render -->
+    <!-- Reemplaza con la URL real de tu backend cuando despliegues -->
+    <link rel="preconnect" href="https://onrender.com" crossorigin>
+    <link rel="dns-prefetch" href="https://onrender.com">
+
+    <title>Sistema Nacional Clínico de Pacientes</title>
+
+    <!-- Estilos ultra ligeros en línea para la pantalla de carga inicial (Skeleton / Spinner) -->
+    <style>
+      .pantalla-carga-inicial {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: system-ui, -apple-system, sans-serif;
+        color: #1e293b;
+        background-color: #f8fafc;
+      }
+      .spinner-clinico {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid #0284c7;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 16px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- CONTENEDOR MAESTRO DE VUE 3 -->
+    <div id="app" role="application" aria-label="Sistema Nacional Clínico de Pacientes">
+      
+      <!-- PANTALLA DE CARGA: Se autodestruirá inmediatamente cuando Vue tome el control del DOM -->
+      <div class="pantalla-carga-inicial" aria-hidden="true">
+        <div class="spinner-clinico"></div>
+        <p style="font-weight: 600; margin: 0;">Iniciando Módulo Clínico...</p>
+        <p style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">Sincronizando con la Red Nacional de Salud</p>
+      </div>
+
+    </div>
+
+    <!-- RESPALDO POR SI EL NAVEGADOR TIENE JAVASCRIPT DESHABILITADO -->
+    <noscript>
+      <div style="text-align: center; padding: 50px; font-family: sans-serif; background-color: #fef2f2; color: #991b1b; height: 100vh; box-sizing: border-box;">
+        <h2>Falla de Entorno del Sistema</h2>
+        <p>Este aplicativo clínico institucional requiere que JavaScript esté habilitado en su navegador para resguardar la firma de tokens JWT y transacciones de datos médicos.</p>
+        <p>Por favor, contacte al Administrador de Soporte Técnico de su establecimiento.</p>
+      </div>
+    </noscript>
+
+    <!-- Inyección del punto de arranque nativo de Vite -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
