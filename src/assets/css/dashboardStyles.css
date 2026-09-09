@@ -512,6 +512,9 @@
     flex-direction: column;
     gap: 12px;
   }
+  .grid-formulario {
+  grid-template-columns: 1fr !important;
+}
   .item-atencion-lista, .entrada-boton, .contenedor-flex-cabecera {
     flex-direction: column;
     align-items: stretch;
@@ -564,4 +567,59 @@
   background-color: #0d9488;
   color: #ffffff;
   border-color: #0d9488;
+}
+
+
+
+
+/* Contenedor relativo inmune al flexbox exterior */
+.caja-input {
+  position: relative !important;
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* El input se estira al 100% de la caja protectora */
+.caja-input input {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding-right: 40px !important; /* Espacio para que el texto no toque la X */
+}
+
+/* Botón de la X forzado milimétricamente al extremo derecho */
+.btn-limpiar {
+  position: absolute !important;
+  right: 15px !important; /* Desplazado al borde derecho interior */
+  left: auto !important;  /* Rompe cualquier centrado heredado */
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  
+  /* Reset total de estilos de botón */
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 4px !important;
+  margin: 0 !important;
+  
+  /* Aspecto visual */
+  color: #9ca3af !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  z-index: 99 !important; /* Se posiciona sobre el input para recibir el click */
+  display: inline-block !important;
+}
+
+/* Cambio estético al pasar el mouse */
+.btn-limpiar:hover {
+  color: #0d9488 !important;
 }

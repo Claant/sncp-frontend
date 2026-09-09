@@ -17,7 +17,7 @@
       <!-- FORMULARIO DE ALTA (Columna Izquierda) -->
       <section class="tarjeta-formulario">
         <h3>Registrar Nuevo Centro</h3>
-        <form @submit.prevent="registrarEstablecimiento" class="formulario-centros">
+        <form @submit.prevent="registrarEstablecimiento" class="formulario_clinico">
           <div class="campo">
             <label>Nombre del Establecimiento</label>
             <input 
@@ -47,7 +47,7 @@
       <!-- LISTADO DE INFRAESTRUCTURA HOSPITALARIA (Columna Derecha) -->
       <section class="tarjeta-listado">
         <h3>Establecimientos Vigentes</h3>
-        <div v-if="cargando" class="cargando-tabla">Consultando catálogo nacional...</div>
+        <div v-if="cargando" class="cargando-tabla">Consultando registros...</div>
         
         <div v-else class="tabla-contenedor">
           <table>
@@ -60,7 +60,7 @@
             <tbody>
               <!-- Renderizado condicional si el catálogo nacional viene vacío -->
               <tr v-if="listaCentros.length === 0">
-                <td colspan="2" class="tabla-vacia">No hay establecimientos registrados en la Red Nacional.</td>
+                <td colspan="2" class="tabla-vacia">No hay establecimientos registrados.</td>
               </tr>
               <tr v-for="item in listaCentros" :key="item._id">
                 <td class="celda-principal">{{ item.nombre_centro }}</td>
@@ -81,6 +81,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
+import '../assets/css/baseStyles.css';
 
 const authStore = useAuthStore();
 
@@ -111,7 +112,7 @@ const lanzarNotificacion = (texto, tipo) => {
   }, 4000); // 4 segundos en pantalla y se desvanece de forma autónoma
 };
 
-// Consumo de catálogo fresco mediante la Fetch API nativa
+// consultar el catálogo de centros de salud a través de tu API REST.
 const consultarCatalogo = async () => {
   cargando.value = true;
   try {
@@ -120,7 +121,7 @@ const consultarCatalogo = async () => {
       listaCentros.value = await respuesta.json();
     }
   } catch (error) {
-    console.error('❌ Error al cargar la red de salud:', error.message);
+    console.error('❌ Error al cargar los centros de salud:', error.message);
   } finally {
     cargando.value = false;
   }
@@ -133,7 +134,7 @@ const registrarEstablecimiento = async () => {
   guardando.value = true;
   notificacion.texto = '';
 
-  // 🚀 NORMALIZACIÓN: Sanitizamos la entrada de texto antes de empaquetar el payload hacia Atlas
+  // NORMALIZACIÓN: Sanitizamos la entrada de texto antes de empaquetar el payload hacia Atlas
   const payloadSustancioso = {
     nombre_centro: centro.nombre_centro.trim(),
     tipo_prestador: centro.tipo_prestador
@@ -187,16 +188,7 @@ const registrarEstablecimiento = async () => {
 
 
 <style scoped>
-/* Estilos locales complementarios para empaquetar el módulo de infraestructura */
-.formulario-centros {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.tarjeta-formulario, .tarjeta-listado {
-  background: #ffffff;
-  padding: 10px;
-}
+
 .cargando-tabla {
   color: var(--texto-secundario);
   font-size: 0.9rem;

@@ -5,7 +5,7 @@
       
       <!-- ENCABEZADO CLÍNICO CON LOGOTIPO VECTORIAL CORPORATIVO -->
       <div class="encabezado-clinico">
-        <!-- 🚀 NUEVO LOGO INCORPORADO (Asegúrate de guardar tu imagen como 'logo-clinico.png' en tus assets) -->
+        <!-- NUEVO LOGO INCORPORADO (Asegúrate de guardar tu imagen como 'logo-clinico.png' en tus assets) -->
         <img 
           src="../assets/logo-clinico.png" 
           alt="Logotipo Sistema Nacional Clínico" 
@@ -60,7 +60,7 @@
 <!-- views/Login.vue (PARTE 2: SCRIPT SETUP - CORREGIDO) -->
 <script setup>
 import { reactive, ref, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router'; // 🚀 ADICIÓN: useRoute obligatorio para leer el query string
+import { useRouter, useRoute } from 'vue-router'; // ADICIÓN: useRoute obligatorio para leer el query string
 import { useAuthStore } from '../stores/auth.js';
 
 const router = useRouter();
@@ -76,7 +76,7 @@ const credenciales = reactive({
   password: ''
 });
 
-// 🚀 CAPTURA INTELEGENTE: Captura alertas forenses enviadas en la URL por Pinia ante cierres forzados
+// CAPTURA INTELEGENTE: Captura alertas forenses enviadas en la URL por Pinia ante cierres forzados
 onMounted(() => {
   const alertaMotivo = route.query.alerta;
   
@@ -123,7 +123,7 @@ const procesarAcceso = async () => {
   } catch (err) {
     error.value = err.message;
   } finally {
-    // 🚀 CORRECCIÓN: Garantiza el restablecimiento del estado de carga siempre
+    // CORRECCIÓN: Garantiza el restablecimiento del estado de carga siempre
     estaCargando.value = false;
   }
 };

@@ -3,7 +3,7 @@
   <nav class="barra-navegacion" v-if="authStore.estaAutenticado">
     <div class="contenedor-nav">
       
-      <!-- 🚀 MARCA IDENTIFICATORIA UNIFICADA EN CELESTE CIAN PREMIUM -->
+      <!-- MARCA IDENTIFICATORIA UNIFICADA EN CELESTE CIAN PREMIUM -->
       <div class="marca-sistema" @click="irAlDashboard">
         <!-- Escenario A: Perfil Médico / Clínico -->
         <template v-if="authStore.obtenerRol === 'medico'">        
@@ -64,7 +64,7 @@
         </router-link>
       </div>
 
-      <!-- 👥 CONTENEDOR DE PERFIL APILADO VERTICALMENTE CON MÁXIMO ESPACIADO -->
+      <!-- CONTENEDOR DE PERFIL APILADO VERTICALMENTE CON MÁXIMO ESPACIADO -->
       <div class="perfil-sesion-extremo">
         
         <!-- Caja vertical que ordena el reloj arriba y el usuario abajo -->
@@ -87,7 +87,7 @@
 
         </div>
 
-        <!-- 🚀 BOTÓN INDEPENDIENTE CON CLÁUSULA DE EMPUJE HORIZONTAL EXTREMO -->
+        <!-- BOTÓN INDEPENDIENTE CON CLÁUSULA DE EMPUJE HORIZONTAL EXTREMO -->
         <button @click="ejecutarSalidaManual" class="boton-cerrar-sesion">
           Cerrar Sesión
         </button>
@@ -96,7 +96,7 @@
 
     </div>
 
-    <!-- 🔹 INTEROPERABILIDAD: Cintillo de Notificaciones de la Pasarela FHIR -->
+    <!-- INTEROPERABILIDAD: Cintillo de Notificaciones de la Pasarela FHIR -->
     <div v-if="mensajeAlerta" :class="['cintillo-alerta-interop', tipoAlerta]">
       <p>{{ mensajeAlerta }}</p>
     </div>
@@ -136,7 +136,7 @@ import { useAuthStore } from '../stores/auth.js';
 const router = useRouter();
 const authStore = useAuthStore();
 
-// 🚀 ADICIÓN: Variables reactivas para el cintillo de interoperabilidad FHIR
+// ADICIÓN: Variables reactivas para el cintillo de interoperabilidad FHIR
 // Puedes conectarlas más adelante al store global si la pasarela gatilla eventos
 const mensajeAlerta = ref(''); 
 const tipoAlerta = ref('info'); // Puede ser 'info', 'success', 'warning' o 'error'

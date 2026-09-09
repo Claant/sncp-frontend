@@ -10,34 +10,45 @@
       </p>
     </header>
 
+<!-- BUSCADOR PRINCIPAL POR RUT -->
+<!-- BUSCADOR PRINCIPAL POR RUT -->
+<section v-if="!route.params.id" class="seccion-busqueda">
+  <form @submit.prevent="evaluarCriterioBusqueda" class="formulario-busqueda">
+    <div class="grupo-busqueda">
+      <label for="rut-buscar">Ingrese RUT del Paciente</label>
+      <div class="entrada-boton">
+        
+        <div class="caja-input">
+          <input
+            id="rut-buscar"
+            type="text"
+            v-model="rutBusqueda"
+            placeholder="Ej: 12.345.678-K"
+            required
+            :disabled="buscando"
+          />
 
-    <!-- 🔹 BUSCADOR PRINCIPAL POR RUT  (Se oculta si ya se cargó una ficha por ID de URL desde la Navbar) -->
-    <section v-if="!route.params.id" class="seccion-busqueda">
-      <form
-        @submit.prevent="evaluarCriterioBusqueda"
-        class="formulario-busqueda"
-      >
-        <div class="grupo-busqueda">
-          <label for="rut-buscar">Ingrese RUT del Paciente</label>
-          <div class="entrada-boton">
-            <input
-              id="rut-buscar"
-              type="text"
-              v-model="rutBusqueda"
-              placeholder="Ej: 12.345.678-K"
-              required
-              :disabled="buscando"
-            />
-            <button type="submit" :disabled="buscando" class="btn-buscar">
-              {{ buscando ? "Buscando..." : "Consultar Ficha" }}
-            </button>
-          </div>
+          <button
+            v-if="rutBusqueda && !buscando"
+            type="button"
+            class="btn-limpiar"
+            @click="rutBusqueda = ''"
+          >
+            &#x2715;
+          </button>
         </div>
-      </form>
-    </section>
+        
+        <button type="submit" :disabled="buscando" class="btn-buscar">
+          {{ buscando ? "Buscando..." : "Consultar Ficha" }}
+        </button>
+      </div>
+    </div>
+  </form>
+</section>
 
 
-    <!-- 🔹 MENSAJES DE ERROR Y OPCIONES DE IMPORTACIÓN/REGISTRO -->
+
+    <!-- MENSAJES DE ERROR Y OPCIONES DE IMPORTACIÓN/REGISTRO -->
     <div v-if="mensajeError" class="alerta-clinica">
       <p>{{ mensajeError }}</p>
       <div v-if="origenDatos === 'externo'" class="mt-2">
@@ -73,7 +84,7 @@
     <!-- RESULTADOS INTEGRADOS ESTILO LISTA COMPACTA FICHA PACIENTE-->
     <div v-if="paciente" class="resultado-clinico animate-fade">
 
-      <!-- 🔹 CABECERA DEMOGRÁFICA DEL PACIENTE -->
+      <!-- CABECERA DEMOGRÁFICA DEL PACIENTE -->
       <div class="tarjeta-paciente-cabecera contenedor-flex-cabecera">
         <div class="datos-cabecera-paciente">
           <h3>Paciente: {{ paciente.nombre }}</h3>
@@ -245,7 +256,7 @@
                 :key="diag._id"
                 class="cuerpo-cuadro-diagnostico"
               >
-                <!-- 🚀 VERIFICACIÓN CRÍTICA EN TU TEMPLATE: -->
+                <!-- VERIFICACIÓN CRÍTICA EN TU TEMPLATE: -->
                 <div class="fila-diagnostico-premium">
                   <span class="etiqueta-diagnostico"
                     >Código de Enfermedad (CIE-10):</span
@@ -333,7 +344,9 @@
         </div>
       </article>
 
-      <!-- 🔹 AVISO DE PRIVACIDAD PARA ADMINISTRADORES -->
+
+
+      <!-- AVISO DE PRIVACIDAD PARA ADMINISTRADORES -->
       <div
         v-else-if="authStore.obtenerRol === 'administrador'"
         class="aviso-privacidad animate-fade"
@@ -342,11 +355,14 @@
           >Aviso de Confidencialidad (Ley de Derechos del Paciente):</strong
         >
         Su perfil institucional (Administrador) le autoriza exclusivamente a
-        validar la vigencia demográfica del RUT. Las fichas médicas y códigos de
+        gestionar los RR HH del personal de salud y al alta de infraestructura de centros de salud. Las fichas médicas y códigos de
         diagnóstico CIE-10 se encuentran restringidos para personal clínico
         acreditado.
       </div>
     </div>
+
+
+    
   </div>
 </template>
 
@@ -374,7 +390,7 @@ const guardandoNuevaConsulta = ref(false);
 const formularioNuevaAtencionAbierto = ref(false);
 const mensajeError = ref(null);
 
-// 🚀 UNIFICADO: Estado reactivo de procedencia para habilitar el botón de alta express del template
+// UNIFICADO: Estado reactivo de procedencia para habilitar el botón de alta express del template
 const origenDatos = ref("none"); // 'local', 'externo', 'ninguno'
 
 // Variable crítica de interoperabilidad para capturar el ID del clúster remoto
@@ -387,7 +403,7 @@ const bitacoraAccesos = ref([]);
 const diagnosticos = ref([]);
 
 
-// 📊 CONTROL DE PAGINACIÓN DE LA BITÁCORA FORENSE OWASP (Client-Side)
+// CONTROL DE PAGINACIÓN DE LA BITÁCORA FORENSE OWASP (Client-Side)
 const paginaBitacora = ref(1);
 const porPaginaBitacora = 3;
 
@@ -404,7 +420,7 @@ const bitacoraPaginada = computed(() => {
   );
 });
 
-// 📊 CONTROL DE PAGINACIÓN DEL HISTORIAL CLÍNICO CRONOLÓGICO (Client-Side)
+// CONTROL DE PAGINACIÓN DEL HISTORIAL CLÍNICO CRONOLÓGICO (Client-Side)
 const pagina = ref(1);
 const porPagina = 3;
 
@@ -514,7 +530,7 @@ const consultarSistemaNacional = async () => {
       pagina.value = 1;
       paginaBitacora.value = 1;
 
-      // 🎯 DISPARADOR ÚNICO: Auditamos de forma controlada el acceso general a la ficha demográfica
+      // DISPARADOR ÚNICO: Auditamos de forma controlada el acceso general a la ficha demográfica
       await registrarAuditoriaForense(paciente.value._id, null);
     }
 
@@ -547,13 +563,13 @@ const cerrarFichaClinica = () => {
 
 
 // Carga contextual asíncrona cuando se interroga pasando el ObjectId de la URL
+// views/Dashboard.vue -> Modifica cargarFichaPorIdDirecto para forzar origen local
 const cargarFichaPorIdDirecto = async (pacienteId) => {
   buscando.value = true;
   mensajeError.value = null;
   paciente.value = null;
   historial.value = [];
   cerrarFichaClinica();
-
   try {
     const respuesta = await authStore.fetchSeguro(
       `/expedientes/paciente/${pacienteId}`,
@@ -565,18 +581,21 @@ const cargarFichaPorIdDirecto = async (pacienteId) => {
       bitacoraAccesos.value = datos.bitacora || [];
       paciente.value = datos.paciente;
       rutBusqueda.value = paciente.value?.rut || "";
+      
+      // 🚀 ADICIÓN CRÍTICA: Forzamos el origen local aquí para que el template active
+      // las directivas v-if que dependen del flujo síncrono del médico
+      origenDatos.value = "local"; 
+      
       pagina.value = 1;
       paginaBitacora.value = 1;
 
-      // 🎯 DISPARADOR ÚNICO INTEGRADO:
-      // Si el paciente se cargó correctamente y tiene un ID válido, gatillamos la auditoría forense
       if (paciente.value?._id || paciente.value?.id) {
         const idReal = paciente.value._id || paciente.value.id;
         await registrarAuditoriaForense(idReal, null);
       }
     }
   } catch (error) {
-    console.error("❌ Error en carga por ID directo:", error.message);
+    console.error(" ⚠️ Error en carga por ID directo:", error.message);
   } finally {
     buscando.value = false;
   }
@@ -589,7 +608,6 @@ const cargarFichaPorIdDirecto = async (pacienteId) => {
 // PARTE 3: INTEROPERABILIDAD FHIR, ALTAS LOCALES Y CIERRE TÉCNICO
 // ====================================================================
 
-// Despliegue flotante extendido de diagnósticos CIE-10 de la atención seleccionada
 // Despliegue flotante extendido de diagnósticos CIE-10 de la atención seleccionada
 const toggleFichaClinica = async (atencion) => {
   if (atencionSeleccionada.value?._id === atencion._id) {
@@ -616,7 +634,7 @@ const toggleFichaClinica = async (atencion) => {
         ? datosBff.bitacora
         : [];
 
-      // 🎯 DISPARADOR ÚNICO INTEGRADO:
+      // DISPARADOR ÚNICO INTEGRADO:
       // Auditamos la consulta del folio de atención detallado vinculando el paciente y la consulta
       if (paciente.value?._id || paciente.value?.id) {
         const idPacienteReal = paciente.value._id || paciente.value.id;
@@ -625,7 +643,7 @@ const toggleFichaClinica = async (atencion) => {
     }
   } catch (err) {
     console.error(
-      "❌ No se pudo resolver los diagnósticos forenses:",
+      " ⚠️ No se pudo resolver los diagnósticos forenses:",
       err.message,
     );
   } finally {
@@ -635,31 +653,28 @@ const toggleFichaClinica = async (atencion) => {
 
 
 
-// 📦 PASARELA INTEROPERABLE: Descarga el Bundle FHIR remoto y ejecuta el Commit transaccional (ACID)
+// PASARELA INTEROPERABLE: Descarga el Bundle FHIR remoto y ejecuta el Commit transaccional (ACID)
+// views/Dashboard.vue - Función ejecutable de interoperabilidad corregida
 const ejecutarImportacionFHIRDesdeDashboard = async () => {
   if (!pacienteIdExternoContingencia.value) return;
-
   buscando.value = true;
-  mensajeError.value =
-    "🔄 Extrayendo registros clínicos HL7 FHIR desde clúster remoto...";
-
+  mensajeError.value = "🔄 Extrayendo registros clínicos HL7 FHIR desde clúster remoto...";
+  
   try {
     const resFHIR = await authStore.fetchSeguro(
-      `/expedientes/paciente/${pacienteIdExternoContingencia.value}/fhir`,
+      `/expedientes/paciente/${pacienteIdExternoContingencia.value}/fhir`
     );
+    
     if (!resFHIR || !resFHIR.ok) {
-      throw new Error(
-        "Error de comunicación de red al extraer el Bundle FHIR remoto.",
-      );
+      throw new Error("Error de comunicación de red al extraer el Bundle FHIR remoto.");
     }
-
+    
     const fhirBundleJSON = await resFHIR.json();
-    mensajeError.value =
-      "📦 Bundle FHIR recibido con éxito. Sincronizando e integrando historial en base local...";
-
+    mensajeError.value = "📦 Bundle FHIR recibido con éxito. Sincronizando e integrando historial en base local...";
+    
     let resImportar;
     let rutasAProbar = ["/expedientes/fhir/importar", "/expedientes/importar"];
-
+    
     for (let ruta of rutasAProbar) {
       resImportar = await authStore.fetchSeguro(ruta, {
         method: "POST",
@@ -667,52 +682,52 @@ const ejecutarImportacionFHIRDesdeDashboard = async () => {
       });
       if (resImportar.status !== 404) break;
     }
-
+    
     if (resImportar.status === 404) {
-      throw new Error(
-        "El servidor central Express no tiene mapeado el endpoint de importación POST.",
-      );
+      throw new Error("El servidor central Express no tiene mapeado el endpoint de importación POST.");
     }
-
+    
+    // CORRECCIÓN CRÍTICA 1: Extraer los datos de la respuesta ANTES de evaluarla
     const resultadoImportacion = await resImportar.json();
-
+    
     if (resImportar.ok) {
       mensajeError.value = null;
-      alert(
-        `✅ ¡Interoperabilidad Exitosa! El expediente HL7 FHIR ha sido integrado con éxito en los registros locales.`,
-      );
-
-      rutBusqueda.value = "";
-      pacienteIdExternoContingencia.value = null;
-
+      alert(`✅ ¡Interoperabilidad Exitosa! El expediente HL7 FHIR ha sido integrado con éxito en los registros locales.`);
+      
+      // Mapeo seguro del ID local recién generado por tu API
       const idPacienteLocalNuevo =
         resultadoImportacion.paciente_id ||
         resultadoImportacion.id ||
-        resultadoImportacion.expediente_id;
+        resultadoImportacion.expediente_id ||
+        resultadoImportacion.paciente?._id;
 
-      if (idPacienteLocalNuevo) {
-        await cargarFichaPorIdDirecto(idPacienteLocalNuevo);
+      rutBusqueda.value = "";
+      pacienteIdExternoContingencia.value = null;
+      origenDatos.value = "local"; // Actualizamos el origen para activar la UI del médico
+
+      if (idPacienteLocalNuevo && idPacienteLocalNuevo.length === 24) {
+       mensajeError.value = "✅ Expediente importado. Vuelva a consultar el RUT para visualizar los datos.";
       } else {
-        rutBusqueda.value = "16432915-7";
         await consultarSistemaNacional();
       }
     } else {
-      throw new Error(
-        resultadoImportacion.msg ||
-          "Error crítico al persistir el expediente clínico interoperado.",
-      );
+      // Ahora resultadoImportacion ya existe de manera segura
+      throw new Error(resultadoImportacion.msg || "El clúster rechazó la adición del expediente clínico.");
     }
   } catch (error) {
-    console.error("❌ Error en pasarela de importación:", error.message);
-    mensajeError.value = `❌ Falla de Interoperabilidad: ${error.message}`;
+    console.error("⚠️ Error en pasarela de importación:", error.message);
+    mensajeError.value = `⚠️ Falla de Interoperabilidad: ${error.message}`;
+    alert(`⚠️ No se pudo importar: ${error.message}`);
   } finally {
+    // CORRECCIÓN CRÍTICA 2: El botón SE APAGA SÍ O SÍ, pase lo que pase, evitando congelamientos
     buscando.value = false;
   }
 };
 
 
 
-// 🟢 REEMPLAZAR POR ESTA NUEVA FUNCIÓN ADAPTADA
+
+// REEMPLAZAR POR ESTA NUEVA FUNCIÓN ADAPTADA
 const ejecutarGuardadoDesdeDashboard = async (payload) => {
   guardandoNuevaConsulta.value = true;
   try {
@@ -732,7 +747,7 @@ const ejecutarGuardadoDesdeDashboard = async (payload) => {
     if (respuesta.ok) {
       alert("✅ Evento clínico e informe patológico CIE-10 anexados con éxito.");
       
-      // 🚀 LIMPIEZA REACTIVA: Le ordena al formulario hijo resetear sus campos locales
+      // LIMPIEZA REACTIVA: Le ordena al formulario hijo resetear sus campos locales
       payload.resetForm(); 
       formularioNuevaAtencionAbierto.value = false;
       
@@ -743,7 +758,7 @@ const ejecutarGuardadoDesdeDashboard = async (payload) => {
     }
   } catch (error) {
     console.error(error);
-    alert(`❌ Error al registrar consulta: ${error.message}`);
+    alert(`⚠️ Error al registrar consulta: ${error.message}`);
   } finally {
     guardandoNuevaConsulta.value = false;
   }
@@ -760,31 +775,17 @@ const redirigirAlRegistroExpress = () => {
 
 
 
-// 📡 OBSERVADOR REACTIVO VUE ROUTER: Escucha parámetros variables de URL
 onMounted(() => {
-  const idPacienteURL = route.params.pacienteId || route.params.id;
-  if (idPacienteURL && idPacienteURL.length === 24) {
-    cargarFichaPorIdDirecto(idPacienteURL);
-  }
+  // Inicialización básica, sin cargar ficha por ID automático
+  paciente.value = null;
+  historial.value = [];
+  diagnosticos.value = [];
+  bitacoraAccesos.value = [];
 });
 
 
-watch(
-  () => route.params.pacienteId,
-  (nuevoId) => {
-    if (nuevoId && nuevoId.length === 24) {
-      cargarFichaPorIdDirecto(nuevoId);
-    } else if (!nuevoId) {
-      paciente.value = null;
-      historial.value = [];
-      cerrarFichaClinica();
-    }
-  },
-  { immediate: true },
-);
-
 // ====================================================================
-// 🔒 SERVICIO CENTRALIZADO DE AUDITORÍA FORENSE IDEMPOTENTE
+// SERVICIO CENTRALIZADO DE AUDITORÍA FORENSE IDEMPOTENTE
 // ====================================================================
 const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
   if (!pacienteId) return;
@@ -816,7 +817,11 @@ const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
       }
     }
   } catch (error) {
-    console.error("❌ Fallo de comunicación en bus de auditoría:", error.message);
+    console.error("⚠️ Fallo de comunicación en bus de auditoría:", error.message);
+  }finally {
+    // 🚀 CONTROL CRÍTICO: Garantiza que el spinner y el estado de "Buscando..." 
+    // se desactiven por completo si el backend local tarda en responder
+    buscando.value = false;
   }
 };
 

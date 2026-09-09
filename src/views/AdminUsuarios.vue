@@ -15,7 +15,7 @@
       <!-- FORMULARIO DE REGISTRO (Columna Izquierda) -->
       <section class="tarjeta-formulario">
         <h3>Registrar Nuevo Funcionario</h3>
-        <form @submit.prevent="registrarFuncionario" class="formulario-admin">
+        <form @submit.prevent="registrarFuncionario" class="formulario-clinico">
           <div class="campo">
             <label>RUT Nacional</label>
             <input type="text" v-model="nuevoUsuario.rut" autocomplete="nuevoUsuario.rut" placeholder="12345678-9" required :disabled="guardando" />
@@ -110,7 +110,7 @@
             </tbody>
           </table>
 
-          <!-- 📊 CONTROLES DE PAGINACIÓN A NIVEL DE SERVIDOR -->
+          <!-- CONTROLES DE PAGINACIÓN A NIVEL DE SERVIDOR -->
           <div class="paginacion" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 15px;">
             <button 
               type="button" 
@@ -142,6 +142,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
+import '../assets/css/baseStyles.css';
 
 const authStore = useAuthStore();
 
@@ -155,7 +156,7 @@ const notificacion = reactive({ texto: '', tipo: '' });
 // Temporizador interno para desvanecer las alertas clínicas de la UI
 let timeoutNotificacion = null;
 
-// 📊 ESTADOS DE CONTROL PARA LA PAGINACIÓN REQUERIDA
+// ESTADOS DE CONTROL PARA LA PAGINACIÓN REQUERIDA
 const metaPaginacion = reactive({
   paginaActual: 1,
   paginasTotales: 1,
@@ -210,7 +211,7 @@ const consultarUsuariosPaginados = async (numPagina = 1) => {
       metaPaginacion.paginasTotales = payload.paginacion.paginasTotales;
     }
   } catch (error) {
-    console.error('❌ Error al cargar la nómina paginada:', error.message);
+    console.error('⚠️ Error al cargar la nómina paginada:', error.message);
     lanzarNotificacion('No se pudo establecer contacto con el servidor de recursos humanos.', 'error');
   } finally {
     cargandoUsuarios.value = false;
@@ -234,7 +235,7 @@ const cargarDatosAdministrativos = async () => {
     }
     if (resCentros && resCentros.ok) centros.value = await resCentros.json();
   } catch (error) {
-    console.error('❌ Error al poblar el módulo administrativo de personal:', error.message);
+    console.error('⚠️ Error al poblar el módulo administrativo de personal:', error.message);
     lanzarNotificacion('Error al inicializar los catálogos del módulo.', 'error');
   } finally {
     cargandoUsuarios.value = false;
@@ -302,17 +303,7 @@ const registrarFuncionario = async () => {
 
 
 <style scoped>
-/* Estilos locales complementarios para estructurar los paneles cooperativos */
-.formulario-admin {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
 
-.tarjeta-formulario, .tarjeta-listado {
-  background: #ffffff;
-  padding: 10px;
-}
 
 .cargando-tabla {
   color: var(--texto-secundario);

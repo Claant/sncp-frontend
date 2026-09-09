@@ -75,7 +75,7 @@
             :disabled="guardando"
           />
           <p class="nota-administrativa">
-            Su rol operativo requiere la vinculación de un registro domiciliario previamente validado en la red nacional.
+            Su rol operativo requiere la vinculación de un registro domiciliario previamente validado en el centro de salud.
           </p>
         </div>
       </fieldset>
@@ -178,7 +178,7 @@ const procesarRegistroPaciente = async () => {
 
       if (!resDireccion) return; // Detención si falló la sesión
       
-      // 🚀 CORRECCIÓN: Consumimos el JSON una única vez en una variable para evitar el crash del body stream
+      // CORRECCIÓN: Consumimos el JSON una única vez en una variable para evitar el crash del body stream
       const datosDireccion = await resDireccion.json();
 
       if (!resDireccion.ok) {
@@ -207,11 +207,11 @@ const procesarRegistroPaciente = async () => {
     const datosPaciente = await resPaciente.json();
 
     if (!resPaciente.ok) {
-      throw new Error(datosPaciente.msg || 'Falla crítica al registrar la inscripción demográfica.');
+      throw new Error(datosPaciente.msg || 'Falla crítica al registrar la inscripción del paciente.');
     }
 
-    // 🚀 CORRECCIÓN UX: Removemos el alert() invasivo y pasamos el mensaje a la alerta reactiva unificada
-    lanzarAlertaLocal(datosPaciente.msg || 'Paciente inscrito exitosamente en la Red Nacional.', 'exito');
+    // CORRECCIÓN UX: Removemos el alert() invasivo y pasamos el mensaje a la alerta reactiva unificada
+    lanzarAlertaLocal(datosPaciente.msg || 'Paciente inscrito exitosamente en este centro de salud.', 'exito');
 
     // Limpieza atómica y reactiva de campos tras guardar con éxito
     Object.keys(paciente).forEach(key => paciente[key] = '');
@@ -220,7 +220,7 @@ const procesarRegistroPaciente = async () => {
   } catch (error) {
     lanzarAlertaLocal(error.message, 'error');
   } finally {
-    // 🚀 CORRECCIÓN DE SINTAXIS: Cambiado 'bits' por 'finally' para corregir la línea en rojo de VS Code
+    // CORRECCIÓN DE SINTAXIS: Cambiado 'bits' por 'finally' para corregir la línea en rojo de VS Code
     guardando.value = false;
   }
 };

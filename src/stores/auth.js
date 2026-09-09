@@ -131,30 +131,51 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async iniciarSesion(correo, password) {
-      try {
-        const respuesta = await fetch(`${API_URL}/auth/login`, { 
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ correo, password })
-        });
-        
-        const datos = await respuesta.json();
-        
-        if (!respuesta.ok) throw new Error(datos.msg || 'Credenciales inválidas.');
 
-        this.token = datos.token;
-        this.usuario = datos.usuario;
-        localStorage.setItem('token', datos.token);
-        localStorage.setItem('usuario', JSON.stringify(datos.usuario));
+    // aca se implementa la logica de reintentos para el login, con un maximo de 3 intentos
+    // esto quiere decir que si el backend no responde, se reintentara 3 veces antes de mostrar un error al usuario
+   async iniciarSesion(correo, password) {
+  const maxReintentos = 3;
+  let intentoActual = 0;
+  let respuesta = null;
+  let datos = null;
 
-        this.inicializarRelojesSeguridad();
-        return { exito: true };
-
-      } catch (error) {
-        return { exito: false, error: error.message };
+  while (intentoActual < maxReintentos) {
+    try {
+      respuesta = await fetch(`${API_URL}/auth/login`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo, password })
+      });
+      
+      datos = await respuesta.json();
+      break; // Si la petición fue exitosa (con o sin error de credenciales), rompemos el bucle
+    } catch (error) {
+      intentoActual++;
+      console.warn(`⚠️ Intento ${intentoActual} fallido en canal de autenticación local. Reintentando...`);
+      
+      if (intentoActual >= maxReintentos) {
+        return { exito: false, error: "El servidor clínico local no responde. Verifique que el Backend esté encendido." };
       }
-    },
+      
+      // Espera 1.5 segundos antes de lanzar el siguiente intento para darle aire al Backend
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+  }
+
+  try {
+    if (!respuesta.ok) throw new Error(datos.msg || 'Credenciales inválidas.');
+    
+    this.token = datos.token;
+    this.usuario = datos.usuario;
+    localStorage.setItem('token', datos.token);
+    localStorage.setItem('usuario', JSON.stringify(datos.usuario));
+    this.inicializarRelojesSeguridad();
+    return { exito: true };
+  } catch (error) {
+    return { exito: false, error: error.message };
+  }
+},
 
     cerrarSesion() {
       this.detenerRelojesSeguridad();
@@ -164,7 +185,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('usuario');
     },
 
-    // 🚀 REFACTORIZADO: Rutas dinámicas de SPA usando Vue Router sin destruir la UI en blanco
+    // REFACTORIZADO: Rutas dinámicas de SPA usando Vue Router sin destruir la UI en blanco
     ejecutarSalidaForzada(motivo = 'expirado') {
       this.cerrarSesion();
       
@@ -202,7 +223,7 @@ export const useAuthStore = defineStore('auth', {
         }
         return respuesta;
       } catch (error) {
-        console.error('❌ Error en canal seguro fetchSeguro:', error.message);
+        console.error('⚠️ Error en canal seguro fetchSeguro:', error.message);
         throw error;
       }
     }

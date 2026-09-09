@@ -85,7 +85,7 @@ const routes = [
       roles: ['administrador'] 
     }
   },
-  // 🚀 ADICIÓN: Capturador universal para rutas no definidas (Evita vistas rotas en blanco)
+  // ADICIÓN: Capturador universal para rutas no definidas (Evita vistas rotas en blanco)
   {
     path: '/:pathMatch(.*)*',
     redirect: '/'
@@ -129,8 +129,8 @@ router.beforeEach((to, from) => {
     const rolesPermitidos = to.meta.roles.map(r => r.toLowerCase());
 
     if (!rolesPermitidos.includes(usuarioRol)) {
-      // 🚀 OPTIMIZACIÓN: Notificamos de forma asíncrona a través del store en lugar de congelar la UI con alert()
-      console.warn(`🛑 Acceso denegado: El rol institucional (${usuarioRol || 'No definido'}) intentó forzar la ruta ${to.path}`);
+      // OPTIMIZACIÓN: Notificamos de forma asíncrona a través del store en lugar de congelar la UI con alert()
+      console.warn(`⚠️ Acceso denegado: El rol institucional (${usuarioRol || 'No definido'}) intentó forzar la ruta ${to.path}`);
       
       if (usuarioRol === 'administrador') {
         return '/admin/usuarios';

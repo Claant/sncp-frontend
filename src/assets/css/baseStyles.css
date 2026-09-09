@@ -41,6 +41,62 @@ body {
   box-sizing: border-box;
 }
 
+
+/* ====================================================================
+   COMPONENTES CLÍNICOS CENTRALIZADOS (Agrega esto a tu styles.css)
+   ==================================================================== */
+.tarjeta-formulario, .tarjeta-listado {
+  background: #ffffff;
+  padding: 10px;
+}
+
+.formulario-clinico {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formulario-clinico {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cargando-tabla {
+  color: var(--texto-secundario);
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.celda-principal {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.celda-secundaria {
+  font-size: 0.8rem;
+  color: var(--texto-secundario);
+  margin-top: 2px;
+}
+
+/* Esto organiza las tarjetas en paralelo */
+.panel-cooperativo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+/* Esto le da la distribución proporcional en pantallas de escritorio o tablets */
+@media (min-width: 768px) {
+  .panel-cooperativo {
+    grid-template-columns: 1fr 1.3fr;
+    gap: 30px;
+  }
+}
+
+
 /* Encabezados y Descripciones */
 header h1, header h2 {
   color: var(--clinico-oscuro);

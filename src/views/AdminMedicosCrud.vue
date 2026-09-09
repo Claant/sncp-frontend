@@ -5,7 +5,7 @@
       <h2>Módulo de Control y CRUD de Personal Médico</h2>
       <p>
         Auditoría de especialidades, actualización de datos base y control de
-        vigencia en la Red Nacional.
+        vigencia en el centro de salud.
       </p>
     </header>
 
@@ -137,7 +137,7 @@
           </tbody>
         </table>
         
-        <!-- 📊 CONTROLES DE PAGINACIÓN ASISTENCIAL (Inyectados con éxito en la grilla derecha) -->
+        <!-- CONTROLES DE PAGINACIÓN ASISTENCIAL (Inyectados con éxito en la grilla derecha) -->
         <div class="paginacion" style="margin: 20px 0; padding: 15px; border-top: 1px solid #e2e8f0; display: flex; justify-content: center; align-items: center; gap: 15px;">
           <button 
             type="button" 
@@ -253,11 +253,11 @@ const guardandoCambios = ref(false);
 const procesandoId = ref(null);
 const notificacion = reactive({ texto: '', tipo: '' });
 
-// 📊 ESTADOS DE CONTROL PARA LA PAGINACIÓN DESDE EL SERVIDOR
+// ESTADOS DE CONTROL PARA LA PAGINACIÓN DESDE EL SERVIDOR
 const metaPaginacion = reactive({
-  paginaActual: 1,
-  paginasTotales: 1,
-  limite: 10
+  paginaActual: 1, // en que pagina estas 
+  paginasTotales: 1, // cuantas paginas hay en total de las paginaActual 
+  limite: 10 // cuantos registros por pagina se van a mostrar
 });
 
 // Estados del Formulario Modal de Edición
@@ -372,7 +372,7 @@ const alternarEstadoMedico = async (medico) => {
 // LÓGICA DE ACTUALIZACIÓN (Abrir, cerrar y guardar cambios desde el Modal)
 const abrirEditor = (medico) => {
   notificacion.texto = '';
-  // 🚀 CORRECCIÓN VUE 3 Proxy: Mutamos propiedad por propiedad para mantener la reactividad del formulario
+  // CORRECCIÓN VUE 3 Proxy: Mutamos propiedad por propiedad para mantener la reactividad del formulario
   medicoSeleccionado._id = medico._id;
   medicoSeleccionado.nombre = medico.nombre;
   medicoSeleccionado.rut = medico.rut;
@@ -409,7 +409,7 @@ const guardarCambiosMedico = async () => {
       throw new Error(datos.msg || 'Falla interna al actualizar los datos del médico.');
     }
   } catch (error) {
-    // 🚀 CORRECCIÓN: Evitamos congelar la UI de Vue y despachamos el error al contenedor reactivo unificado
+    // CORRECCIÓN: Evitamos congelar la UI de Vue y despachamos el error al contenedor reactivo unificado
     lanzarNotificacionLocal(error.message, 'error');
   } finally {
     guardandoCambios.value = false;
@@ -421,7 +421,7 @@ const eliminarMedicoDefinitivo = async (medico) => {
   const primerFiltro = confirm(`ADVERTENCIA CRÍTICA: ¿Está seguro de eliminar permanentemente al profesional ${medico.nombre}?`);
   if (!primerFiltro) return;
 
-  const segundoFiltro = confirm(`ESTA ACCIÓN NO SE PUEDE DESHACER. Se borrará el RUT ${medico.rut} de toda la base de datos nacional. ¿Desea proceder?`);
+  const segundoFiltro = confirm(`ESTA ACCIÓN NO SE PUEDE DESHACER. Se borrará el RUT ${medico.rut} de toda la base de datos de este centro de salud. ¿Desea proceder?`);
   if (!segundoFiltro) return;
 
   procesandoId.value = medico._id;
@@ -435,7 +435,7 @@ const eliminarMedicoDefinitivo = async (medico) => {
     const datos = await respuesta.json();
 
     if (respuesta && respuesta.ok) {
-      lanzarNotificacionLocal(datos.msg || 'Registro de profesional de salud purgado de Atlas.', 'exito');
+      lanzarNotificacionLocal(datos.msg || 'Registro de profesional de salud eliminado de la base de datos.', 'exito');
       
       const paginaDestino = (medicosFiltrados.value.length === 1 && metaPaginacion.paginaActual > 1) 
         ? metaPaginacion.paginaActual - 1 

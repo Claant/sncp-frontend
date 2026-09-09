@@ -210,7 +210,7 @@ const evaluarPasoSiguiente = () => {
 
   if (pasoActual.value === 1) {
     if (!formulario.calle.trim() || !formulario.numero.trim() || !formulario.comuna.trim() || !formulario.ciudad.trim()) {
-      lanzarAlertaLocal('Por favor, complete todos los campos de ubicación geográfica del Paso 1.', 'error');
+      lanzarAlertaLocal('Por favor, complete todos los campos de su residencia del Paso 1.', 'error');
       return;
     }
     pasoActual.value = 2;
