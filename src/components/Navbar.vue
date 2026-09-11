@@ -91,10 +91,18 @@
         <button @click="ejecutarSalidaManual" class="boton-cerrar-sesion">
           Cerrar Sesión
         </button>
-
       </div>
-
     </div>
+
+ <!-- ALERTA PREVIA AL CIERRE DE SESIÓN -->
+    <div v-if="authStore.mostrarAlertaAnticipada" class="alerta-sesion-critica">
+      ⚠️ Atención: su sesión expirará en {{ authStore.tiempoFormateado }}.
+      <button @click="authStore.extenderSesionClinica" class="btn-extender-activo">
+        🔄 Extender Sesión
+      </button>
+    </div>
+
+
 
     <!-- INTEROPERABILIDAD: Cintillo de Notificaciones de la Pasarela FHIR -->
     <div v-if="mensajeAlerta" :class="['cintillo-alerta-interop', tipoAlerta]">
@@ -150,6 +158,11 @@ const irAlDashboard = () => {
 };
 
 const ejecutarSalidaManual = () => authStore.ejecutarSalidaForzada('manual');
+
+// 🔄 Función para extender sesión desde el Navbar
+const extenderSesionDesdeNavbar = () => {
+  authStore.extenderSesionClinica();
+};
 </script>
 
 <style scoped>

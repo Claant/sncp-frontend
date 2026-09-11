@@ -10,7 +10,7 @@ export const useAuthStore = defineStore('auth', {
     usuario: (() => {
       try { return JSON.parse(localStorage.getItem('usuario')); } catch { return null; }
     })(),
-    tiempoSegundos: 28800,   // 8 horas = 28800 segundos
+    tiempoSegundos: 300,   // 5 minutos = 300 segundos
     segundosInactivo: 0,     // 60 segundos = 1 minuto
     mostrarAlertaAnticipada: false,   
     mostrarModalInactividad: false,  
@@ -47,21 +47,26 @@ export const useAuthStore = defineStore('auth', {
         this.inicializarRelojesSeguridad();
       }
     },
-
-    inicializarRelojesSeguridad() {
+        inicializarRelojesSeguridad() {
       this.detenerRelojesSeguridad(); 
       
-      this.tiempoSegundos = 28800;
+      const tiempoPersistido = localStorage.getItem('tiempoSegundos');
+      if (tiempoPersistido) {
+        this.tiempoSegundos = parseInt(tiempoPersistido, 10);
+      } else {
+        this.tiempoSegundos = 300;  
+      }
+      
       this.segundosInactivo = 0;
       this.mostrarAlertaAnticipada = false;
       this.mostrarModalInactividad = false;
       this.cuentaRegresivaCierre = 15;
-
-      // 1. CRONÓMETRO DE TURNO GENERAL (8 HORAS)
+      
       this.intervaloId = setInterval(() => {
         if (this.tiempoSegundos > 0) {
           this.tiempoSegundos--;
-          if (this.tiempoSegundos <= 1800) {
+          localStorage.setItem('tiempoSegundos', this.tiempoSegundos); 
+          if (this.tiempoSegundos <= 30) {  
             this.mostrarAlertaAnticipada = true;
           }
         } else {
@@ -70,7 +75,6 @@ export const useAuthStore = defineStore('auth', {
         }
       }, 1000);
 
-      // 2. DETECTOR DE INACTIVIDAD DE INTERFAZ (60 SEGUNDOS)
       this.intervaloInactivityId = setInterval(() => {
         if (!this.mostrarModalInactividad) {
           this.segundosInactivo++;
@@ -82,12 +86,12 @@ export const useAuthStore = defineStore('auth', {
       }, 1000);
 
       this.boundResetearContadorInactividad = this.resetearContadorInactividad.bind(this);
-
       window.addEventListener('mousemove', this.boundResetearContadorInactividad);
       window.addEventListener('keydown', this.boundResetearContadorInactividad);
       window.addEventListener('click', this.boundResetearContadorInactividad);
       window.addEventListener('scroll', this.boundResetearContadorInactividad);
     },
+
 
     gatillarCuentaRegresivaCierre() {
       if (this.intervaloAlertaCierreId) clearInterval(this.intervaloAlertaCierreId);
@@ -106,13 +110,33 @@ export const useAuthStore = defineStore('auth', {
         this.segundosInactivo = 0;
       }
     },
-
-    extenderSesionClinica() {
+// aca se implementa la logica para extender la sesion de la clinica, esto se hace cuando el usuario esta inactivo y
+// se le muestra un modal, si el usuario hace click en extender sesion, se resetea el contador de inactividad y se cierra
+// el modal
+              extenderSesionClinica() {
+      // 1. Ocultamos los componentes visuales de alerta
       this.mostrarModalInactividad = false;
+      this.mostrarAlertaAnticipada = false;
+      
+      // 2. Reseteamos el contador de inactividad física de la interfaz
       this.segundosInactivo = 0;
       this.cuentaRegresivaCierre = 15;
-      if (this.intervaloAlertaCierreId) clearInterval(this.intervaloAlertaCierreId);
+      
+      // 3. Limpiamos el intervalo de la cuenta regresiva de inactividad si existiera
+      if (this.intervaloAlertaCierreId) {
+        clearInterval(this.intervaloAlertaCierreId);
+        this.intervaloAlertaCierreId = null;
+      }
+
+      // 4. 🔥 SOLUCIÓN CRÍTICA: Validamos si el tiempo de sesión general está en zona de riesgo (30 segundos o menos).
+      // Si el usuario presiona "Extender" desde la alerta de expiración de tiempo, le devolvemos sus 3 minutos.
+      if (this.tiempoSegundos <= 30) {
+        this.tiempoSegundos = 300;
+        localStorage.setItem('tiempoSegundos', this.tiempoSegundos);
+      }
     },
+
+
 
     detenerRelojesSeguridad() {
       if (this.intervaloId) clearInterval(this.intervaloId);
@@ -140,6 +164,7 @@ export const useAuthStore = defineStore('auth', {
   let respuesta = null;
   let datos = null;
 
+  
   while (intentoActual < maxReintentos) {
     try {
       respuesta = await fetch(`${API_URL}/auth/login`, { 
@@ -177,13 +202,16 @@ export const useAuthStore = defineStore('auth', {
   }
 },
 
+
     cerrarSesion() {
       this.detenerRelojesSeguridad();
       this.token = null;
       this.usuario = null;
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
+      localStorage.removeItem('tiempoSegundos'); // 🔹 Limpieza absoluta
     },
+
 
     // REFACTORIZADO: Rutas dinámicas de SPA usando Vue Router sin destruir la UI en blanco
     ejecutarSalidaForzada(motivo = 'expirado') {

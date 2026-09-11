@@ -269,6 +269,44 @@
   .enlace-nav { width: 100%; text-align: center; box-sizing: border-box; }
 }
 
+/* ====================================================================
+   navbarStyles.css - PARTE 4: ALERTA PREVIA AL CIERRE DE SESIÓN
+   ==================================================================== */
+
+.alerta-sesion-critica {
+  background-color: #fff7ed;   /* Fondo suave de advertencia */
+  color: #c2410c;              /* Texto naranja crítico */
+  border: 1px solid #fed7aa;   /* Borde preventivo */
+  padding: 12px 18px;
+  margin: 12px 0;
+  border-radius: 6px;
+  font-weight: 600;
+  text-align: center;
+  animation: parpadeoCritico 1s infinite alternate; /* Parpadeo visual */
+}
+
+.alerta-sesion-critica button {
+  margin-left: 12px;
+  background-color: #0d9488;
+  color: #ffffff;
+  border: none;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.alerta-sesion-critica button:hover {
+  background-color: #115e59;
+}
+
+/* Animación de parpadeo para captar atención */
+@keyframes parpadeoCritico {
+  from { opacity: 1; }
+  to { opacity: 0.6; }
+}
 
 
 

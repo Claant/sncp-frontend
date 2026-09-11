@@ -88,7 +88,7 @@ onMounted(() => {
     } else if (alertaMotivo === 'seguridad') {
       error.value = 'Acceso denegado de forma perimetral: Intento de violación de políticas de privilegios RBAC.';
     } else if (alertaMotivo === 'expirado') {
-      error.value = 'Su sesión ha expirado tras cumplir el límite reglamentario de 8 horas de turno médico continuo. Por favor, re-autentique.';
+      error.value = 'Su sesión ha expirado tras cumplir el límite reglamentario de 3 minutos.';
     }
   }
 });
