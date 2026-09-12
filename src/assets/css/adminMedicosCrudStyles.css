@@ -3,6 +3,15 @@
    📦 SISTEMA DE REJILLA Y ALINEACIÓN FORENSE ASISTENCIAL
    ==================================================================== */
 /* Limpiamos herencias fantasmas y configuramos márgenes relativos puros */
+/* Forzamos que el contenedor de esta vista se adapte al ancho total 
+   del layout de App.vue, eliminando el límite de 950px que deforma la tabla. */
+.admin-contenedor {
+  max-width: 100% !important;
+  width: 100% !important;
+  background: var(--blanco-puro) !important;
+  padding: 30px !important;
+  box-sizing: border-box !important;
+}
 .admin-encabezado {
   width: 100%;
   margin-bottom: 25px;
