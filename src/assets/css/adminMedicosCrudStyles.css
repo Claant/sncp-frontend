@@ -1,97 +1,43 @@
 
-
-.admin-contenedor {
-  max-width: 100% !important;
-  width: 100% !important;
-  background: var(--blanco-puro) !important;
-  padding: 30px !important;
-  box-sizing: border-box !important;
-}
-
+/* ====================================================================
+   📦 SISTEMA DE REJILLA Y ALINEACIÓN FORENSE ASISTENCIAL
+   ==================================================================== */
+/* Limpiamos herencias fantasmas y configuramos márgenes relativos puros */
 .admin-encabezado {
-  width: 100% !important;
-  margin-bottom: 25px !important;
-  text-align: left !important;
-  padding-left: 0 !important;
-  margin-left: 0 !important;
-  box-sizing: border-box !important;
+  width: 100%;
+  margin-bottom: 25px;
+  text-align: left;
+  box-sizing: border-box;
 }
 
 .admin-encabezado h2 {
   margin: 0 0 6px 0 !important;
-  font-size: 1.7rem !important;
-  color: var(--clinico-oscuro) !important;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--clinico-oscuro); /* Recupera tu verde oscuro de baseStyles */
+  line-height: 1.2;
 }
 
 .admin-encabezado p {
   margin: 0 !important;
-  font-size: 0.95rem !important;
-  color: var(--texto-secundario) !important;
+  font-size: 0.92rem;
+  color: var(--texto-secundario);
+  line-height: 1.4;
 }
 
+/* 🚀 EL AJUSTE MAESTRO: Removemos el fondo duplicado y los paddings innecesarios */
 .tarjeta-listado {
-  background: transparent !important;
-  padding: 0 !important;
-  border: none !important;
-  box-shadow: none !important;
+  background: transparent !important; /* Elimina la doble tarjeta blanca */
+  padding: 0 !important;             /* Alineación matemática exacta al borde izquierdo */
+  border: none !important;            /* Evita dobles bordes grises */
+  box-shadow: none !important;        /* Quita sombras redundantes */
   width: 100%;
   box-sizing: border-box;
 }
 
-
-
-.tabla-contenedor {
-  width: 100% !important;
-  overflow-x: auto !important;
-  box-sizing: border-box !important;
-  border: 1px solid var(--borde-suave);
-  border-radius: 8px;
-}
-
-table {
-  width: 100% !important;
-  border-collapse: collapse !important;
-  table-layout: fixed !important;
-  box-sizing: border-box !important;
-}
-
-td, th {
-  vertical-align: middle !important;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--borde-suave);
-}
-
-/* Alinea la última columna a la derecha para amarrar botones */
-th:last-child,
-td:last-child {
-  text-align: right !important;
-  padding-right: 20px !important;
-}
-
-
-
-.celda-acciones {
-  display: flex !important;
-  gap: 6px !important;
-  justify-content: flex-end !important;
-  align-items: center !important;
-}
-
-.celda-acciones button,
-.btn-siguiente,
-.boton-cerrar-sesion {
-  padding: 6px 12px !important;
-  font-size: 0.8rem !important;
-  font-weight: 600 !important;
-  width: auto !important;
-  white-space: nowrap !important;
-  border-radius: 4px !important;
-  cursor: pointer !important;
-  box-sizing: border-box !important;
-}
-
-
-
+/* ====================================================================
+   ESTILOS INTERNOS DE LA TABLA Y NÓMINA DE MÉDICOS
+   ==================================================================== */
 .cargando-tabla {
   text-align: center;
   color: var(--texto-secundario);
@@ -104,21 +50,25 @@ td:last-child {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--clinico-oscuro);
-  text-align: left;
 }
 
 .celda-secundaria {
   font-size: 0.82rem;
   color: var(--texto-secundario);
   margin-top: 2px;
-  text-align: left;
 }
 
+.celda-acciones {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 
-
+/* ====================================================================
+   CONTROLADORES DINÁMICOS DE BOTONES (CRUD / ACCIONES)
+   ==================================================================== */
 .boton-cerrar-sesion.btn-suspender {
   background-color: #64748b;
-  color: #ffffff;
 }
 
 .boton-cerrar-sesion.btn-suspender:hover {
@@ -127,34 +77,30 @@ td:last-child {
 
 .boton-cerrar-sesion:not(.btn-suspender) {
   background-color: var(--exito);
-  color: #ffffff;
 }
 
 .boton-cerrar-sesion:not(.btn-suspender):hover {
   background-color: var(--clinico-oscuro);
 }
 
+/* Modificación de la aduana crítica de eliminación */
 .btn-eliminar-critico {
   background-color: #dc2626 !important;
-  color: #ffffff !important;
 }
-
 .btn-eliminar-critico:hover {
   background-color: #991b1b !important;
 }
 
 /* ====================================================================
-   🚀 PAGINACIÓN
+   🚀 COMPLEMENTO: ESTILOS PARA LA BOTONERA DE PAGINACIÓN DE MÉDICOS
    ==================================================================== */
-
 .paginacion {
-  margin-top: 25px;
-  padding: 15px 0 5px 0;
+  margin-top: 20px;
+  padding: 15px 0;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 15px;
-  width: 100%;
 }
 
 .paginacion button {
@@ -181,12 +127,3 @@ td:last-child {
   opacity: 0.7;
 }
 
-.paginacion span {
-  font-size: 0.9rem;
-  color: #334155;
-  font-weight: 600;
-  background: #f1f5f9;
-  padding: 4px 12px;
-  border-radius: 20px;
-  border: 1px solid #e2e8f0;
-}
