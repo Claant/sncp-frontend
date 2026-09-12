@@ -1,6 +1,5 @@
-/* ====================================================================
-📦 SISTEMA DE REJILLA Y ALINEACIÓN BILATERAL (CORREGIDO)
-==================================================================== */
+
+
 .admin-contenedor {
   max-width: 100% !important;
   width: 100% !important;
@@ -39,9 +38,8 @@
   box-sizing: border-box;
 }
 
-/* ====================================================================
-📊 CONTROL GEOMÉTRICO DE LA TABLA
-==================================================================== */
+
+
 .tabla-contenedor {
   width: 100% !important;
   overflow-x: auto !important;
@@ -59,17 +57,19 @@ table {
 
 td, th {
   vertical-align: middle !important;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--borde-suave);
 }
 
+/* Alinea la última columna a la derecha para amarrar botones */
 th:last-child,
 td:last-child {
   text-align: right !important;
   padding-right: 20px !important;
 }
 
-/* ====================================================================
-🎯 BOTONES CRUD
-==================================================================== */
+
+
 .celda-acciones {
   display: flex !important;
   gap: 6px !important;
@@ -85,11 +85,13 @@ td:last-child {
   font-weight: 600 !important;
   width: auto !important;
   white-space: nowrap !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
 }
 
-/* ====================================================================
-🧩 TEXTO Y BADGES
-==================================================================== */
+
+
 .cargando-tabla {
   text-align: center;
   color: var(--texto-secundario);
@@ -112,11 +114,11 @@ td:last-child {
   text-align: left;
 }
 
-/* ====================================================================
-🎨 COLORES DE BOTONES
-==================================================================== */
+
+
 .boton-cerrar-sesion.btn-suspender {
   background-color: #64748b;
+  color: #ffffff;
 }
 
 .boton-cerrar-sesion.btn-suspender:hover {
@@ -125,6 +127,7 @@ td:last-child {
 
 .boton-cerrar-sesion:not(.btn-suspender) {
   background-color: var(--exito);
+  color: #ffffff;
 }
 
 .boton-cerrar-sesion:not(.btn-suspender):hover {
@@ -133,6 +136,7 @@ td:last-child {
 
 .btn-eliminar-critico {
   background-color: #dc2626 !important;
+  color: #ffffff !important;
 }
 
 .btn-eliminar-critico:hover {
@@ -140,8 +144,9 @@ td:last-child {
 }
 
 /* ====================================================================
-🚀 PAGINACIÓN
-==================================================================== */
+   🚀 PAGINACIÓN
+   ==================================================================== */
+
 .paginacion {
   margin-top: 25px;
   padding: 15px 0 5px 0;
@@ -176,3 +181,12 @@ td:last-child {
   opacity: 0.7;
 }
 
+.paginacion span {
+  font-size: 0.9rem;
+  color: #334155;
+  font-weight: 600;
+  background: #f1f5f9;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+}
