@@ -2,9 +2,42 @@
 /* ====================================================================
    📦 SISTEMA DE REJILLA Y ALINEACIÓN FORENSE ASISTENCIAL
    ==================================================================== */
-/* Limpiamos herencias fantasmas y configuramos márgenes relativos puros */
-/* Forzamos que el contenedor de esta vista se adapte al ancho total 
-   del layout de App.vue, eliminando el límite de 950px que deforma la tabla. */
+/* ====================================================================
+   📊 ENLACE Y CONTROL GEOMÉTRICO DE LA TABLA (CORREGIDO)
+   ==================================================================== */
+/* Obliga a la tabla a ocupar exactamente el ancho del contenedor blanco */
+table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  table-layout: fixed !important; /* 🚀 CLÁUSULA CRÍTICA: Fuerza anchos de columna estrictos */
+  box-sizing: border-box !important;
+}
+
+/* Definimos anchos proporcionales fijos para que las columnas no se empujen */
+th:nth-child(1), td:nth-child(1) { width: 25%; } /* Identificación */
+th:nth-child(2), td:nth-child(2) { width: 20%; } /* Contacto */
+th:nth-child(3), td:nth-child(3) { width: 18%; } /* Especialidad */
+th:nth-child(4), td:nth-child(4) { width: 12%; } /* Estado */
+th:nth-child(5), td:nth-child(5) { width: 25%; } /* Panel Administrativo (Fijo) */
+
+/* Ajustamos la celda de acciones para empaquetar los botones sin desbordar */
+.celda-acciones {
+  display: flex !important;
+  gap: 6px !important; /* Compactamos levemente el espacio entre botones */
+  align-items: center !important;
+  justify-content: flex-start !important;
+  white-space: nowrap !important;
+}
+
+/* Reducimos sutilmente el padding horizontal de los botones dentro de la tabla 
+   para asegurar que entren perfectamente en su 25% asignado */
+.celda-acciones button {
+  padding: 6px 10px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  width: auto !important; /* Rompe el 100% del CSS global */
+}
+
 .admin-contenedor {
   max-width: 100% !important;
   width: 100% !important;
