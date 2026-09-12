@@ -15,7 +15,7 @@
     </div>
 
     <!-- PANEL CENTRAL DEL CRUD -->
-    <section class="tarjeta-listado" style="padding: 0">
+    <section class="tarjeta-listado">
       <div v-if="cargando" class="cargando-tabla">
         Consultando nómina de especialistas en MongoDB Atlas...
       </div>
