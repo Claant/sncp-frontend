@@ -1,6 +1,6 @@
 /* ====================================================================
-   📦 SISTEMA DE REJILLA Y ALINEACIÓN BILATERAL (ESTRICTO)
-   ==================================================================== */
+📦 SISTEMA DE REJILLA Y ALINEACIÓN BILATERAL (CORREGIDO)
+==================================================================== */
 .admin-contenedor {
   max-width: 100% !important;
   width: 100% !important;
@@ -9,7 +9,6 @@
   box-sizing: border-box !important;
 }
 
-/* Fuerza el alineamiento nativo del encabezado eliminando el desfase */
 .admin-encabezado {
   width: 100% !important;
   margin-bottom: 25px !important;
@@ -41,8 +40,8 @@
 }
 
 /* ====================================================================
-   📊 ENLACE Y CONTROL GEOMÉTRICO DE LA TABLA (DISEÑO FLUIDO SEGURO)
-   ==================================================================== */
+📊 CONTROL GEOMÉTRICO DE LA TABLA
+==================================================================== */
 .tabla-contenedor {
   width: 100% !important;
   overflow-x: auto !important;
@@ -54,22 +53,23 @@
 table {
   width: 100% !important;
   border-collapse: collapse !important;
-  table-layout: fixed !important; /* Fuerza columnas estables */
+  table-layout: fixed !important;
   box-sizing: border-box !important;
 }
 
 td, th {
-  vertical-align: middle !important; /* Centrado vertical uniforme */
+  vertical-align: middle !important;
 }
 
-/* 🎯 Alineamos encabezado y celdas de la última columna */
 th:last-child,
 td:last-child {
   text-align: right !important;
   padding-right: 20px !important;
 }
 
-/* Contenedor compacto para los botones */
+/* ====================================================================
+🎯 BOTONES CRUD
+==================================================================== */
 .celda-acciones {
   display: flex !important;
   gap: 6px !important;
@@ -77,7 +77,6 @@ td:last-child {
   align-items: center !important;
 }
 
-/* Reducción equilibrada del relleno de los botones del CRUD */
 .celda-acciones button,
 .btn-siguiente,
 .boton-cerrar-sesion {
@@ -89,8 +88,8 @@ td:last-child {
 }
 
 /* ====================================================================
-   ESTILOS INTERNOS DE TEXTO Y BADGES
-   ==================================================================== */
+🧩 TEXTO Y BADGES
+==================================================================== */
 .cargando-tabla {
   text-align: center;
   color: var(--texto-secundario);
@@ -114,8 +113,8 @@ td:last-child {
 }
 
 /* ====================================================================
-   CONTROLADORES DINÁMICOS DE BOTONES COLORES
-   ==================================================================== */
+🎨 COLORES DE BOTONES
+==================================================================== */
 .boton-cerrar-sesion.btn-suspender {
   background-color: #64748b;
 }
@@ -141,8 +140,8 @@ td:last-child {
 }
 
 /* ====================================================================
-   🚀 COMPLEMENTO: ESTILOS PARA LA BOTONERA DE PAGINACIÓN
-   ==================================================================== */
+🚀 PAGINACIÓN
+==================================================================== */
 .paginacion {
   margin-top: 25px;
   padding: 15px 0 5px 0;
@@ -176,3 +175,4 @@ td:last-child {
   cursor: not-allowed;
   opacity: 0.7;
 }
+
