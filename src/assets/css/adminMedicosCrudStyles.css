@@ -15,7 +15,7 @@
   margin-bottom: 25px !important;
   text-align: left !important;
   padding-left: 0 !important;
-  margin-left: 0 !important; /* Ajustado a 0 para que calce con el borde natural */
+  margin-left: 0 !important;
   box-sizing: border-box !important;
 }
 
@@ -33,9 +33,9 @@
 
 .tarjeta-listado {
   background: transparent !important;
-  padding: 0 !important;             
-  border: none !important;            
-  box-shadow: none !important;        
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
   width: 100%;
   box-sizing: border-box;
 }
@@ -45,7 +45,7 @@
    ==================================================================== */
 .tabla-contenedor {
   width: 100% !important;
-  overflow-x: auto !important; 
+  overflow-x: auto !important;
   box-sizing: border-box !important;
   border: 1px solid var(--borde-suave);
   border-radius: 8px;
@@ -54,27 +54,26 @@
 table {
   width: 100% !important;
   border-collapse: collapse !important;
-  table-layout: auto !important; /* 🚀 El navegador calcula las columnas de forma natural */
+  table-layout: fixed !important; /* Fuerza columnas estables */
   box-sizing: border-box !important;
 }
 
-/* 🎯 EL TRUCO PARA EL BORDE DERECHO: Alineamos el encabezado y las celdas de la 
-   última columna hacia la derecha para amarrar los botones al borde gris final */
-th:last-child {
-  text-align: right !important;
-  padding-right: 24px !important;
+td, th {
+  vertical-align: middle !important; /* Centrado vertical uniforme */
 }
 
+/* 🎯 Alineamos encabezado y celdas de la última columna */
+th:last-child,
 td:last-child {
   text-align: right !important;
-  padding-right: 16px !important;
+  padding-right: 20px !important;
 }
 
-/* Contenedor compacto en línea para empaquetar los botones sin empujar la celda */
+/* Contenedor compacto para los botones */
 .celda-acciones {
-  display: inline-flex !important; /* Evita comportamientos de bloque que estiran la tabla */
-  gap: 6px !important;             /* Espaciado sutil entre Editar, Suspender y Eliminar */
-  justify-content: flex-end !important; /* Empuja el botón 'Eliminar' contra el borde derecho */
+  display: flex !important;
+  gap: 6px !important;
+  justify-content: flex-end !important;
   align-items: center !important;
 }
 
@@ -82,11 +81,11 @@ td:last-child {
 .celda-acciones button,
 .btn-siguiente,
 .boton-cerrar-sesion {
-  padding: 6px 12px !important;   /* Relleno compacto ideal */
-  font-size: 0.8rem !important;   /* Tipografía nítida y controlada */
+  padding: 6px 12px !important;
+  font-size: 0.8rem !important;
   font-weight: 600 !important;
-  width: auto !important;         /* Anula el 100% de la hoja base */
-  white-space: nowrap !important; /* Impide que el texto se parta en dos líneas */
+  width: auto !important;
+  white-space: nowrap !important;
 }
 
 /* ====================================================================
@@ -104,7 +103,7 @@ td:last-child {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--clinico-oscuro);
-  text-align: left; /* Mantiene los nombres justificados a la izquierda */
+  text-align: left;
 }
 
 .celda-secundaria {
@@ -142,38 +141,4 @@ td:last-child {
 }
 
 /* ====================================================================
-   🚀 COMPLEMENTO: ESTILOS PARA LA BOTONERA DE PAGINACIÓN
-   ==================================================================== */
-.paginacion {
-  margin-top: 25px;
-  padding: 15px 0 5px 0;
-  display: flex;
-  justify-content: center; /* Centrado absoluto debajo de tu grilla */
-  align-items: center;
-  gap: 15px;
-  width: 100%;
-}
-
-.paginacion button {
-  background-color: #0284c7;
-  color: #ffffff;
-  border: none;
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
-  width: auto;
-}
-
-.paginacion button:hover:not(:disabled) {
-  background-color: #0369a1;
-}
-
-.paginacion button:disabled {
-  background-color: #cbd5e1;
-  color: #94a3b8;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
+   🚀 COMPLEMENTO: ESTILOS PARA
