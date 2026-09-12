@@ -1,55 +1,138 @@
-/* ====================================================================
-📊 CONTROL GEOMÉTRICO DE LA TABLA (CORREGIDO DE RAÍZ)
-==================================================================== */
-.tabla-contenedor {
-  width: 100% !important;
-  overflow-x: auto !important;
-  box-sizing: border-box !important;
-  border: 1px solid var(--borde-suave);
-  border-radius: 8px;
-}
-
-table {
-  width: 100% !important;
-  border-collapse: collapse !important;
-  table-layout: auto !important; /* 🚀 REVERTIDO A AUTO: Permite que las columnas respiren de forma natural */
-  box-sizing: border-box !important;
-}
-
-td, th {
-  vertical-align: middle !important;
-}
-
-/* 🎯 ALINEACIÓN DEL BORDE DERECHO: Obligamos al encabezado y las celdas del panel 
-   a justificarse a la derecha para amarrar la botonera al final del recuadro gris */
-th:last-child {
-  text-align: right !important;
-  padding-right: 24px !important;
-}
-
-td:last-child {
-  text-align: right !important;
-  padding-right: 16px !important;
-}
 
 /* ====================================================================
-🎯 BOTONES CRUD (FLEXBOX EN LÍNEA CORRECTO)
-==================================================================== */
+   📦 SISTEMA DE REJILLA Y ALINEACIÓN FORENSE ASISTENCIAL
+   ==================================================================== */
+/* Limpiamos herencias fantasmas y configuramos márgenes relativos puros */
+/* Forzamos que el contenedor de esta vista se adapte al ancho total 
+   del layout de App.vue, eliminando el límite de 950px que deforma la tabla. */
+.admin-contenedor {
+  max-width: 100% !important;
+  width: 100% !important;
+  background: var(--blanco-puro) !important;
+  padding: 30px !important;
+  box-sizing: border-box !important;
+}
+.admin-encabezado {
+  width: 100%;
+  margin-bottom: 25px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.admin-encabezado h2 {
+  margin: 0 0 6px 0 !important;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--clinico-oscuro); /* Recupera tu verde oscuro de baseStyles */
+  line-height: 1.2;
+}
+
+.admin-encabezado p {
+  margin: 0 !important;
+  font-size: 0.92rem;
+  color: var(--texto-secundario);
+  line-height: 1.4;
+}
+
+/* 🚀 EL AJUSTE MAESTRO: Removemos el fondo duplicado y los paddings innecesarios */
+.tarjeta-listado {
+  background: transparent !important; /* Elimina la doble tarjeta blanca */
+  padding: 0 !important;             /* Alineación matemática exacta al borde izquierdo */
+  border: none !important;            /* Evita dobles bordes grises */
+  box-shadow: none !important;        /* Quita sombras redundantes */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ====================================================================
+   ESTILOS INTERNOS DE LA TABLA Y NÓMINA DE MÉDICOS
+   ==================================================================== */
+.cargando-tabla {
+  text-align: center;
+  color: var(--texto-secundario);
+  padding: 35px;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+.celda-principal {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--clinico-oscuro);
+}
+
+.celda-secundaria {
+  font-size: 0.82rem;
+  color: var(--texto-secundario);
+  margin-top: 2px;
+}
+
 .celda-acciones {
-  display: inline-flex !important; /* 🚀 inline-flex evita que la caja empuje los bordes hacia afuera */
-  gap: 6px !important;             /* Reduce levemente el espacio entre los 3 botones */
-  justify-content: flex-end !important; /* Amarra el botón 'Eliminar' contra el extremo derecho */
-  align-items: center !important;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-/* Compactamos sutilmente el relleno horizontal de los botones dentro de la grilla 
-   para garantizar que quepan holgadamente en cualquier resolución de pantalla */
-.celda-acciones button,
-.btn-siguiente,
-.boton-cerrar-sesion {
-  padding: 6px 10px !important;   /* Relleno balanceado y estilizado */
-  font-size: 0.8rem !important;
-  font-weight: 600 !important;
-  width: auto !important;         /* Anula el 100% block global */
-  white-space: nowrap !important; /* Impide que el texto de los botones se parta en dos líneas */
+/* ====================================================================
+   CONTROLADORES DINÁMICOS DE BOTONES (CRUD / ACCIONES)
+   ==================================================================== */
+.boton-cerrar-sesion.btn-suspender {
+  background-color: #64748b;
 }
+
+.boton-cerrar-sesion.btn-suspender:hover {
+  background-color: var(--error);
+}
+
+.boton-cerrar-sesion:not(.btn-suspender) {
+  background-color: var(--exito);
+}
+
+.boton-cerrar-sesion:not(.btn-suspender):hover {
+  background-color: var(--clinico-oscuro);
+}
+
+/* Modificación de la aduana crítica de eliminación */
+.btn-eliminar-critico {
+  background-color: #dc2626 !important;
+}
+.btn-eliminar-critico:hover {
+  background-color: #991b1b !important;
+}
+
+/* ====================================================================
+   🚀 COMPLEMENTO: ESTILOS PARA LA BOTONERA DE PAGINACIÓN DE MÉDICOS
+   ==================================================================== */
+.paginacion {
+  margin-top: 20px;
+  padding: 15px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.paginacion button {
+  background-color: #0284c7;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+  width: auto;
+}
+
+.paginacion button:hover:not(:disabled) {
+  background-color: #0369a1;
+}
+
+.paginacion button:disabled {
+  background-color: #cbd5e1;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
