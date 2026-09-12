@@ -1,43 +1,6 @@
-
 /* ====================================================================
-   📦 SISTEMA DE REJILLA Y ALINEACIÓN FORENSE ASISTENCIAL
+   📦 SISTEMA DE REJILLA Y ALINEACIÓN BILATERAL (ESTRICTO)
    ==================================================================== */
-/* ====================================================================
-   📊 ENLACE Y CONTROL GEOMÉTRICO DE LA TABLA (CORREGIDO)
-   ==================================================================== */
-/* Obliga a la tabla a ocupar exactamente el ancho del contenedor blanco */
-table {
-  width: 100% !important;
-  border-collapse: collapse !important;
-  table-layout: fixed !important; /* 🚀 CLÁUSULA CRÍTICA: Fuerza anchos de columna estrictos */
-  box-sizing: border-box !important;
-}
-
-/* Definimos anchos proporcionales fijos para que las columnas no se empujen */
-th:nth-child(1), td:nth-child(1) { width: 25%; } /* Identificación */
-th:nth-child(2), td:nth-child(2) { width: 20%; } /* Contacto */
-th:nth-child(3), td:nth-child(3) { width: 18%; } /* Especialidad */
-th:nth-child(4), td:nth-child(4) { width: 12%; } /* Estado */
-th:nth-child(5), td:nth-child(5) { width: 25%; } /* Panel Administrativo (Fijo) */
-
-/* Ajustamos la celda de acciones para empaquetar los botones sin desbordar */
-.celda-acciones {
-  display: flex !important;
-  gap: 6px !important; /* Compactamos levemente el espacio entre botones */
-  align-items: center !important;
-  justify-content: flex-start !important;
-  white-space: nowrap !important;
-}
-
-/* Reducimos sutilmente el padding horizontal de los botones dentro de la tabla 
-   para asegurar que entren perfectamente en su 25% asignado */
-.celda-acciones button {
-  padding: 6px 10px !important;
-  font-size: 0.8rem !important;
-  font-weight: 600 !important;
-  width: auto !important; /* Rompe el 100% del CSS global */
-}
-
 .admin-contenedor {
   max-width: 100% !important;
   width: 100% !important;
@@ -45,15 +8,14 @@ th:nth-child(5), td:nth-child(5) { width: 25%; } /* Panel Administrativo (Fijo) 
   padding: 30px !important;
   box-sizing: border-box !important;
 }
+
 /* Fuerza el alineamiento nativo del encabezado eliminando el desfase */
 .admin-encabezado {
   width: 100% !important;
   margin-bottom: 25px !important;
   text-align: left !important;
-  /* 🚀 SANGRE NEGATIVA DE COMPENSACIÓN: 
-     Mueve el bloque de textos levemente a la izquierda para cuadrarlo con el borde de la celda */
   padding-left: 0 !important;
-  margin-left: -5px !important; 
+  margin-left: 0 !important; /* Ajustado a 0 para que calce con el borde natural */
   box-sizing: border-box !important;
 }
 
@@ -69,19 +31,66 @@ th:nth-child(5), td:nth-child(5) { width: 25%; } /* Panel Administrativo (Fijo) 
   color: var(--texto-secundario) !important;
 }
 
-
-/* 🚀 EL AJUSTE MAESTRO: Removemos el fondo duplicado y los paddings innecesarios */
 .tarjeta-listado {
-  background: transparent !important; /* Elimina la doble tarjeta blanca */
-  padding: 0 !important;             /* Alineación matemática exacta al borde izquierdo */
-  border: none !important;            /* Evita dobles bordes grises */
-  box-shadow: none !important;        /* Quita sombras redundantes */
+  background: transparent !important;
+  padding: 0 !important;             
+  border: none !important;            
+  box-shadow: none !important;        
   width: 100%;
   box-sizing: border-box;
 }
 
 /* ====================================================================
-   ESTILOS INTERNOS DE LA TABLA Y NÓMINA DE MÉDICOS
+   📊 ENLACE Y CONTROL GEOMÉTRICO DE LA TABLA (DISEÑO FLUIDO SEGURO)
+   ==================================================================== */
+.tabla-contenedor {
+  width: 100% !important;
+  overflow-x: auto !important; 
+  box-sizing: border-box !important;
+  border: 1px solid var(--borde-suave);
+  border-radius: 8px;
+}
+
+table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  table-layout: auto !important; /* 🚀 El navegador calcula las columnas de forma natural */
+  box-sizing: border-box !important;
+}
+
+/* 🎯 EL TRUCO PARA EL BORDE DERECHO: Alineamos el encabezado y las celdas de la 
+   última columna hacia la derecha para amarrar los botones al borde gris final */
+th:last-child {
+  text-align: right !important;
+  padding-right: 24px !important;
+}
+
+td:last-child {
+  text-align: right !important;
+  padding-right: 16px !important;
+}
+
+/* Contenedor compacto en línea para empaquetar los botones sin empujar la celda */
+.celda-acciones {
+  display: inline-flex !important; /* Evita comportamientos de bloque que estiran la tabla */
+  gap: 6px !important;             /* Espaciado sutil entre Editar, Suspender y Eliminar */
+  justify-content: flex-end !important; /* Empuja el botón 'Eliminar' contra el borde derecho */
+  align-items: center !important;
+}
+
+/* Reducción equilibrada del relleno de los botones del CRUD */
+.celda-acciones button,
+.btn-siguiente,
+.boton-cerrar-sesion {
+  padding: 6px 12px !important;   /* Relleno compacto ideal */
+  font-size: 0.8rem !important;   /* Tipografía nítida y controlada */
+  font-weight: 600 !important;
+  width: auto !important;         /* Anula el 100% de la hoja base */
+  white-space: nowrap !important; /* Impide que el texto se parta en dos líneas */
+}
+
+/* ====================================================================
+   ESTILOS INTERNOS DE TEXTO Y BADGES
    ==================================================================== */
 .cargando-tabla {
   text-align: center;
@@ -95,22 +104,18 @@ th:nth-child(5), td:nth-child(5) { width: 25%; } /* Panel Administrativo (Fijo) 
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--clinico-oscuro);
+  text-align: left; /* Mantiene los nombres justificados a la izquierda */
 }
 
 .celda-secundaria {
   font-size: 0.82rem;
   color: var(--texto-secundario);
   margin-top: 2px;
-}
-
-.celda-acciones {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  text-align: left;
 }
 
 /* ====================================================================
-   CONTROLADORES DINÁMICOS DE BOTONES (CRUD / ACCIONES)
+   CONTROLADORES DINÁMICOS DE BOTONES COLORES
    ==================================================================== */
 .boton-cerrar-sesion.btn-suspender {
   background-color: #64748b;
@@ -128,24 +133,25 @@ th:nth-child(5), td:nth-child(5) { width: 25%; } /* Panel Administrativo (Fijo) 
   background-color: var(--clinico-oscuro);
 }
 
-/* Modificación de la aduana crítica de eliminación */
 .btn-eliminar-critico {
   background-color: #dc2626 !important;
 }
+
 .btn-eliminar-critico:hover {
   background-color: #991b1b !important;
 }
 
 /* ====================================================================
-   🚀 COMPLEMENTO: ESTILOS PARA LA BOTONERA DE PAGINACIÓN DE MÉDICOS
+   🚀 COMPLEMENTO: ESTILOS PARA LA BOTONERA DE PAGINACIÓN
    ==================================================================== */
 .paginacion {
-  margin-top: 20px;
-  padding: 15px 0;
+  margin-top: 25px;
+  padding: 15px 0 5px 0;
   display: flex;
-  justify-content: center;
+  justify-content: center; /* Centrado absoluto debajo de tu grilla */
   align-items: center;
   gap: 15px;
+  width: 100%;
 }
 
 .paginacion button {
@@ -171,4 +177,3 @@ th:nth-child(5), td:nth-child(5) { width: 25%; } /* Panel Administrativo (Fijo) 
   cursor: not-allowed;
   opacity: 0.7;
 }
-
