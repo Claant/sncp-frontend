@@ -128,8 +128,6 @@
       />
 
 
-
-
       <!-- 🔹 HISTORIAL CLÍNICO CRONOLÓGICO PAGINADO -->
       <article
         v-if="
@@ -178,8 +176,9 @@
               </div>
             </div>
 
-            <!-- 🔹 DETALLE EXTENDIDO DE UNA ATENCIÓN -->
-            <div class="accion-atencion-lista">
+            <!-- 🔹 ACCIONES DE LA ATENCIÓN: ACORDEÓN REACTIVO E IMPRESIÓN DEL DAU OFICIAL -->
+            <div class="accion-atencion-lista" style="display: flex; gap: 10px; align-items: center;">
+              <!-- Botón 1: Expande el acordeón visual para ver CIE-10 y Bitácora en Vue -->
               <button
                 type="button"
                 @click="toggleFichaClinica(atencion)"
@@ -190,6 +189,17 @@
                     ? "Ocultar Detalle"
                     : "Ver Ficha Clínica"
                 }}
+              </button>
+
+              <!-- 🚀 BOTÓN DAU PDF: Emisión e Impresión del Formato Oficial de Urgencia Chileno -->
+              <button
+                type="button"
+                @click="imprimirDauOficial(atencion)"
+                class="btn-siguiente"
+                style="background-color: #10b981; border: none; padding: 10px 18px; font-size: 0.85rem; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; gap: 5px; width: auto;"
+                :disabled="buscando"
+              >
+                📄 Imprimir DAU
               </button>
             </div>
           </div>
@@ -256,13 +266,10 @@
                 :key="diag._id"
                 class="cuerpo-cuadro-diagnostico"
               >
-                <!-- VERIFICACIÓN CRÍTICA EN TU TEMPLATE: -->
                 <div class="fila-diagnostico-premium">
                   <span class="etiqueta-diagnostico"
                     >Código de Enfermedad (CIE-10):</span
                   >
-
-                  <!-- CORRECCIÓN: Asegúrate de que tenga las llaves dobles de Vue para renderizar el ID dinámico de Atlas -->
                   <span class="badge-cie10-premium">{{
                     diag.codigo_enfermedad
                   }}</span>
@@ -768,6 +775,28 @@ const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
     buscando.value = false; // Desactiva de forma segura el estado de carga
   }
 };
+
+// src/views/Dashboard.vue (Función en el <script setup> de Vue 3)
+const imprimirDauOficial = async (atencion) => {
+  try {
+    // LLamado seguro inyectando las cabeceras Bearer del token clínico de Pinia
+    const respuesta = await authStore.fetchSeguro(`/atenciones/${atencion._id}/pdf`);
+    
+    if (respuesta && respuesta.ok) {
+      const blob = await respuesta.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `DAU-Folio-${atencion._id.slice(-6).toUpperCase()}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+  } catch (error) {
+    alert(`⚠️ No se pudo imprimir el reporte: ${error.message}`);
+  }
+};
+
 
 </script>
 

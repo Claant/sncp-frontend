@@ -1,0 +1,159 @@
+/* ====================================================================
+   DISEÑO MODULAR DEL ASISTENTE CLÍNICO INTEGRADO (STEPPER WIZARD)
+   ==================================================================== */
+
+/* Bloques contenedores que reemplazan a los fieldsets tradicionales */
+.formulario-seccion-bloque {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 30px;
+  margin-bottom: 25px;
+  background: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.titulo-fieldset {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #115e59; /* Verde oscuro clínico */
+}
+
+/* Indicador de Línea de Tiempo Superior (Pasos 1 al 4) */
+.stepper-contenedor {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+  position: relative;
+  background-color: #f8fafc;
+  padding: 18px 25px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+/* Nodos numéricos del Stepper */
+.step-numero {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: #cbd5e1; /* Gris inactivo por defecto */
+  color: #64748b;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: all 0.25s ease-in-out;
+}
+
+.step-texto {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Estado Activo: Paso en el que se encuentra digitando el médico */
+.step-item.activo .step-numero {
+  background-color: #0d9488; /* Turquesa corporativo */
+  color: #ffffff;
+  box-shadow: 0 0 0 5px rgba(13, 148, 136, 0.2);
+}
+
+.step-item.activo .step-texto {
+  color: #0d9488;
+  font-weight: 700;
+}
+
+/* Estado Completado: Etapas superadas con éxito */
+.step-item.completado .step-numero {
+  background-color: #14b8a6;
+  color: #ffffff;
+}
+
+.step-item.completado .step-texto {
+  color: #14b8a6;
+}
+
+/* Subtítulos decorativos internos */
+.subtitulo-seccion {
+  margin: 0 0 20px 0;
+  color: #0d9488;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-bottom: 2px solid #f0fdfa;
+  padding-bottom: 8px;
+}
+
+/* Botonera de Control de Pasos (Volver / Siguiente) */
+.contenedor-acciones-step {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.btn-volver {
+  background-color: #64748b; /* Gris neutro para el retroceso */
+  color: #ffffff;
+  border: none;
+  padding: 12px 26px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: auto; /* Anula el 100% de la hoja base */
+}
+
+.btn-volver:hover:not(:disabled) {
+  background-color: #475569;
+}
+
+.btn-siguiente {
+  background-color: #0284c7; /* Azul corporativo idéntico a tu modelo */
+  color: #ffffff;
+  border: none;
+  padding: 12px 30px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: auto; /* Anula el 100% de la hoja base */
+}
+
+.btn-siguiente:hover:not(:disabled) {
+  background-color: #0369a1;
+}
+
+/* Estructura para inputs en fila única como los Textareas */
+.unica-columna {
+  grid-template-columns: 1fr;
+}
+
+/* Animación sutil de entrada para suavizar las transiciones entre pantallas */
+.animate-fade {
+  animation: fadeIn 0.28s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(3px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
