@@ -366,17 +366,16 @@
   </div>
 </template>
 
-<!-- views/Dashboard.vue (PARTE 1: CONFIGURACIÓN Y PAGINACIÓN) -->
 <script setup>
+
+// views/Dashboard.vue (PARTE 1: IMPORTACIONES, VARIABLES REACTIVAS Y PAGINADORES)
 import { ref, reactive, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth.js";
-// con el @  funciona como ruta directa desde src/ y evita problemas de alias
-// si se usa ../  es una ruta relativa y puede romperse si se mueve el archivo
+
+// Conexión directa mediante alias para evitar quiebres de rutas relativas
 import FormularioNuevaAtencion from "@/components/VistaDashboard/FormularioNuevaVista.vue";
 
-
-// Instanciación formal de los ganchos de navegación de Vue Router
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -389,51 +388,29 @@ const cargandoDiagnostico = ref(false);
 const guardandoNuevaConsulta = ref(false);
 const formularioNuevaAtencionAbierto = ref(false);
 const mensajeError = ref(null);
+const componenteKey = ref(0);
 
-// UNIFICADO: Estado reactivo de procedencia para habilitar el botón de alta express del template
-const origenDatos = ref("none"); // 'local', 'externo', 'ninguno'
-
-// Variable crítica de interoperabilidad para capturar el ID del clúster remoto
+// 🚀 CONTROL INTERACTIVO DE PASARELA: Variables nativas de origen y aduana manual
+const origenDatos = ref("none"); // Puede mutar a: 'local', 'externo', 'ninguno'
 const pacienteIdExternoContingencia = ref(null);
 
+// Contenedores atómicos para el despliegue del expediente relacional NoSQL
 const paciente = ref(null);
 const historial = ref([]);
 const atencionSeleccionada = ref(null);
 const bitacoraAccesos = ref([]);
 const diagnosticos = ref([]);
 
+// 📦 CACHÉ PERIMETRAL: Almacena el recurso clínico FHIR recibido desde el clúster remoto
+const fhirBundleExternoCache = ref(null);
 
-// CONTROL DE PAGINACIÓN DE LA BITÁCORA FORENSE OWASP (Client-Side)
+// Paginadores locales en la capa del navegador (Client-Side)
 const paginaBitacora = ref(1);
 const porPaginaBitacora = 3;
-
-const totalPaginasBitacora = computed(
-  () =>
-    Math.ceil((bitacoraAccesos.value?.length || 0) / porPaginaBitacora) || 1,
-);
-
-const bitacoraPaginada = computed(() => {
-  const inicio = (paginaBitacora.value - 1) * porPaginaBitacora;
-  return (bitacoraAccesos.value || []).slice(
-    inicio,
-    inicio + porPaginaBitacora,
-  );
-});
-
-// CONTROL DE PAGINACIÓN DEL HISTORIAL CLÍNICO CRONOLÓGICO (Client-Side)
 const pagina = ref(1);
 const porPagina = 3;
 
-const totalPaginas = computed(
-  () => Math.ceil((historial.value?.length || 0) / porPagina) || 1,
-);
-
-const historialPaginado = computed(() => {
-  const inicio = (pagina.value - 1) * porPagina;
-  return (historial.value || []).slice(inicio, inicio + porPagina);
-});
-
-// Formateadores cronológicos adaptados a la zona horaria nacional (es-CL)
+// Formateadores cronológicos adaptados a la zona horaria institucional chilena (es-CL)
 const formatearFecha = (stringFecha) => {
   if (!stringFecha) return "N/A";
   return new Date(stringFecha).toLocaleDateString("es-CL", { timeZone: "UTC" });
@@ -444,7 +421,7 @@ const formatearFechaHora = (stringFecha) => {
   return new Date(stringFecha).toLocaleString("es-CL");
 };
 
-// FUNCIÓN AUXILIAR: Estandariza e inyecta el guion atómico por software (ej: 12345678-K)
+// Sanitizador de entrada: Fuerza el guion medio e impide el paso de caracteres basura
 const limpiarRutBuscador = (rutRaw) => {
   if (!rutRaw) return "";
   let limpio = rutRaw.replace(/[^0-9kK]/g, "").toUpperCase();
@@ -452,19 +429,31 @@ const limpiarRutBuscador = (rutRaw) => {
   return `${limpio.slice(0, -1)}-${limpio.slice(-1)}`;
 };
 
+// ====================================================================
+// 🧠 PROPIEDADES COMPUTADAS DE CONTROL: INTERFAZ REACTIVA DE REJILLAS
+// ====================================================================
+const totalPaginas = computed(() => Math.ceil((historial.value?.length || 0) / porPagina) || 1);
+const historialPaginado = computed(() => {
+  const inicio = (pagina.value - 1) * porPagina;
+  return (historial.value || []).slice(inicio, inicio + porPagina);
+});
+
+const totalPaginasBitacora = computed(() => Math.ceil((bitacoraAccesos.value?.length || 0) / porPaginaBitacora) || 1);
+const bitacoraPaginada = computed(() => {
+  const inicio = (paginaBitacora.value - 1) * porPaginaBitacora;
+  return (bitacoraAccesos.value || []).slice(inicio, inicio + porPaginaBitacora);
+});
 
 // ====================================================================
-// PARTE 2: CONTROLADORES PRINCIPALES DE BÚSQUEDA DE RED E ID CONTEXTUAL
+// PARTE 2: MOTORES DE BÚSQUEDA ASÍNCRONOS Y TRADUCCIÓN INTERNA
 // ====================================================================
-
 let consultaEnCurso = false;
 
 const evaluarCriterioBusqueda = async () => {
   if (consultaEnCurso) return;
   consultaEnCurso = true;
-
   try {
-    if (route.params.pacienteId) {
+    if (route.params.pacienteId || route.params.id) {
       await router.push("/dashboard");
       await consultarSistemaNacional();
     } else {
@@ -475,7 +464,7 @@ const evaluarCriterioBusqueda = async () => {
   }
 };
 
-// Modifica el controlador principal para inyectar de forma correcta los estados mapeados
+// 🚀 ADUANA INTERACTIVA ASISTENCIAL: Sincroniza y discrimina orígenes de red
 const consultarSistemaNacional = async () => {
   buscando.value = true;
   mensajeError.value = null;
@@ -484,86 +473,101 @@ const consultarSistemaNacional = async () => {
   diagnosticos.value = [];
   bitacoraAccesos.value = [];
   pacienteIdExternoContingencia.value = null;
-  origenDatos.value = "none"; // Reseteo inicial de seguridad perimetral
+  fhirBundleExternoCache.value = null;
+  origenDatos.value = "none";
   cerrarFichaClinica();
   formularioNuevaAtencionAbierto.value = false;
 
   try {
     const rutSanitizado = limpiarRutBuscador(rutBusqueda.value);
-    const resBusqueda = await authStore.fetchSeguro(
-      `/pacientes/${rutSanitizado}`,
-    );
+    
+    // Consulta a la pasarela híbrida distribuida en Node.js (puerto 4001)
+    const resBusqueda = await authStore.fetchSeguro(`/pacientes/${rutSanitizado}`);
     if (!resBusqueda) return;
-
+    
     const datosPac = await resBusqueda.json();
-    origenDatos.value = datosPac.origen; // Mapeamos de forma nativa el origen enviado por Express
+    origenDatos.value = datosPac.origen || "none";
 
-    // Escenario A: Paciente no existe en ninguna base de datos nacional
+    // Escenario A: El RUT no registra eventos médicos en ningún clúster clínico nacional
     if (!resBusqueda.ok || datosPac.origen === "ninguno") {
-      origenDatos.value = "ninguno"; // Forzamos el estado para habilitar el botón de alta express
-      throw new Error(
-        datosPac.msg ||
-          "El RUT ingresado no está registrado en este centro de salud ni tampoco en otro recinto de salud externo.",
-      );
+      origenDatos.value = "ninguno";
+      throw new Error(datosPac.msg || "El RUT ingresado no está registrado en este centro de salud ni tampoco en otro recinto de salud externo.");
     }
 
-       // Escenario B: Registro clínico local vigente
+    // 🚀 Escenario B: Registro clínico LOCAL vigente (Desempaquetado y Renderizado Directo)
     if (datosPac.origen === "local") {
-      paciente.value = datosPac.paciente || datosPac;
-      if (datosPac.expediente) {
-        historial.value = (datosPac.expediente.atenciones || []).map((a) => ({
-          ...a,
-          startTime: a.fecha || a.createdAt || new Date().toISOString(),
-        }));
-        diagnosticos.value = datosPac.expediente.diagnosticos || [];
-        bitacoraAccesos.value = (datosPac.expediente.bitacora || []).map(
-          (log) => ({
-            ...log,
-            startTime:
-              log.startTime ||
-              log.fecha_consulta ||
-              log.createdAt ||
-              new Date().toISOString(),
-          }),
-        );
+      const fhirBundle = datosPac.fhirBundle;
+      if (fhirBundle && fhirBundle.entry) {
+        
+        // 1. Extraer y estructurar recurso Patient para retrocompatibilidad demográfica
+        const entradaPatient = fhirBundle.entry.find(e => e.resource?.resourceType === "Patient");
+        if (entradaPatient) {
+          paciente.value = {
+            _id: entradaPatient.resource.id,
+            nombre: entradaPatient.resource.name?.[0]?.text || "Paciente Registrado",
+            rut: entradaPatient.resource.identifier?.[0]?.value || rutSanitizado,
+            fecha_nacimiento: entradaPatient.resource.birthDate ? formatearFecha(entradaPatient.resource.birthDate) : "N/A"
+          };
+        }
+
+        // 2. Extraer y estructurar recursos Encounter (Historial de consultas locales)
+        historial.value = fhirBundle.entry
+          .filter(e => e.resource?.resourceType === "Encounter")
+          .map(e => ({
+            _id: e.resource.id,
+            fecha: e.resource.period?.start,
+            motivo_consulta: e.resource.reasonCode?.[0]?.text || "Consulta Asistencial Estandarizada",
+            usuario_id: {
+              nombre: e.resource.participant?.[0]?.individual?.display || "Especialista de Turno"
+            }
+          }));
       }
+
       pagina.value = 1;
       paginaBitacora.value = 1;
 
-      // DISPARADOR ÚNICO: Auditamos de forma controlada el acceso general a la ficha demográfica
-      await registrarAuditoriaForense(paciente.value._id, null);
+      // Disparamos la bitácora legal vinculando el ID único extraído del recurso Patient
+      if (paciente.value?._id) {
+        await registrarAuditoriaForense(paciente.value._id, null);
+      }
     }
-
-
-    // Escenario C: Registro clínico externo remoto (Interoperabilidad FHIR)
+    
+    // 🚀 Escenario C: Registro clínico EXTERNO remoto (Bloqueo preventivo y Activación de Alerta)
     else if (datosPac.origen === "externo") {
-      pacienteIdExternoContingencia.value =
-        datosPac.pacienteIdExterno || "contingencia-remota";
+      // Almacenamos el fhirBundle de forma íntegra en la caché local para el posterior commit
+      fhirBundleExternoCache.value = datosPac.fhirBundle;
+
+      // Mapeamos el ID remoto del recurso Patient para la inyección transaccional
+      const entradaPatientRemoto = datosPac.fhirBundle?.entry?.find(e => e.resource?.resourceType === "Patient");
+      pacienteIdExternoContingencia.value = entradaPatientRemoto?.resource?.id || "contingencia-remota";
+      
+      // RESTAURACIÓN DEL MENSAJE ORIGINAL QUE ENCIENDE EL BOTÓN MANUAL
       mensajeError.value = `Pasarela: El RUT ${rutSanitizado} no posee registros locales. La Pasarela detectó un expediente externo disponible en formato HL7 FHIR en otra instancia remota.`;
     }
+
   } catch (error) {
-    console.error("Fallo en renderizado del Dashboard:", error.message);
+    console.error("❌ Fallo en renderizado del Dashboard FHIR:", error.message);
     mensajeError.value = error.message;
     historial.value = [];
     diagnosticos.value = [];
     bitacoraAccesos.value = [];
     pacienteIdExternoContingencia.value = null;
-  } finally {
+    fhirBundleExternoCache.value = null;
+  } {
     buscando.value = false;
   }
 };
 
-// Cierre atómico de submódulos flotantes extendidos
 const cerrarFichaClinica = () => {
   atencionSeleccionada.value = null;
   diagnosticos.value = [];
   bitacoraAccesos.value = [];
 };
+// ====================================================================
+// PARTE 3: SOPORTE CONTEXTUAL, IMPORTACIÓN TRANSACCIONAL Y LOGS LEY 20.584
+// ====================================================================
 
-
-
-// Carga contextual asíncrona cuando se interroga pasando el ObjectId de la URL
-// views/Dashboard.vue -> Modifica cargarFichaPorIdDirecto para forzar origen local
+// Carga contextual asíncrona cuando se interroga pasando el ID de la URL (Navbar de expedientes)
 const cargarFichaPorIdDirecto = async (pacienteId) => {
   buscando.value = true;
   mensajeError.value = null;
@@ -571,163 +575,118 @@ const cargarFichaPorIdDirecto = async (pacienteId) => {
   historial.value = [];
   cerrarFichaClinica();
   try {
-    const respuesta = await authStore.fetchSeguro(
-      `/expedientes/paciente/${pacienteId}`,
-    );
+    const respuesta = await authStore.fetchSeguro(`/expedientes/paciente/${pacienteId}`);
     if (respuesta && respuesta.ok) {
       const datos = await respuesta.json();
+      
+      // Sincronización en cascada de estructuras tradicionales de la base local
       historial.value = datos.atenciones || [];
       diagnosticos.value = datos.diagnosticos || [];
       bitacoraAccesos.value = datos.bitacora || [];
       paciente.value = datos.paciente;
-      rutBusqueda.value = paciente.value?.rut || "";
-      
-      // 🚀 ADICIÓN CRÍTICA: Forzamos el origen local aquí para que el template active
-      // las directivas v-if que dependen del flujo síncrono del médico
-      origenDatos.value = "local"; 
+      rutBusqueda.value = datos.paciente?.rut || "";
+      origenDatos.value = "local"; // Habilita reactivamente los v-if asistenciales del médico
       
       pagina.value = 1;
       paginaBitacora.value = 1;
-
-      if (paciente.value?._id || paciente.value?.id) {
-        const idReal = paciente.value._id || paciente.value.id;
-        await registrarAuditoriaForense(idReal, null);
+      if (paciente.value?._id) {
+        await registrarAuditoriaForense(paciente.value._id, null);
       }
     }
   } catch (error) {
-    console.error(" ⚠️ Error en carga por ID directo:", error.message);
+    console.error("⚠️ Error en carga por ID directo de expedientes:", error.message);
   } finally {
     buscando.value = false;
   }
 };
 
-
-
-
-// ====================================================================
-// PARTE 3: INTEROPERABILIDAD FHIR, ALTAS LOCALES Y CIERRE TÉCNICO
-// ====================================================================
-
-// Despliegue flotante extendido de diagnósticos CIE-10 de la atención seleccionada
+// Despliega reactivamente los diagnósticos CIE-10 (Condition) amarrados al Encounter seleccionado
 const toggleFichaClinica = async (atencion) => {
   if (atencionSeleccionada.value?._id === atencion._id) {
     cerrarFichaClinica();
     return;
   }
-
   atencionSeleccionada.value = atencion;
   diagnosticos.value = [];
   bitacoraAccesos.value = [];
   cargandoDiagnostico.value = true;
   paginaBitacora.value = 1;
-
   try {
-    const resDiag = await authStore.fetchSeguro(
-      `/diagnosticos/atencion/${atencion._id}`,
-    );
+    const resDiag = await authStore.fetchSeguro(`/diagnosticos/atencion/${atencion._id}`);
     if (resDiag && resDiag.ok) {
       const datosBff = await resDiag.json();
-      diagnosticos.value = Array.isArray(datosBff.diagnosticos)
-        ? datosBff.diagnosticos
-        : [];
-      bitacoraAccesos.value = Array.isArray(datosBff.bitacora)
-        ? datosBff.bitacora
-        : [];
-
-      // DISPARADOR ÚNICO INTEGRADO:
-      // Auditamos la consulta del folio de atención detallado vinculando el paciente y la consulta
-      if (paciente.value?._id || paciente.value?.id) {
-        const idPacienteReal = paciente.value._id || paciente.value.id;
-        await registrarAuditoriaForense(idPacienteReal, atencion._id);
+      diagnosticos.value = Array.isArray(datosBff.diagnosticos) ? datosBff.diagnosticos : [];
+      bitacoraAccesos.value = Array.isArray(datosBff.bitacora) ? datosBff.bitacora : [];
+      
+      if (paciente.value?._id) {
+        await registrarAuditoriaForense(paciente.value._id, atencion._id);
       }
     }
   } catch (err) {
-    console.error(
-      " ⚠️ No se pudo resolver los diagnósticos forenses:",
-      err.message,
-    );
+    console.error("⚠️ Error controlado al resolver diagnósticos forenses:", err.message);
   } finally {
     cargandoDiagnostico.value = false;
   }
 };
 
-
-
-// PASARELA INTEROPERABLE: Descarga el Bundle FHIR remoto y ejecuta el Commit transaccional (ACID)
-// views/Dashboard.vue - Función ejecutable de interoperabilidad corregida
+// PASARELA INTEROPERABLE RESTAURADA: Consume el fhirBundle de la caché y gatilla la inyección ACID
 const ejecutarImportacionFHIRDesdeDashboard = async () => {
-  if (!pacienteIdExternoContingencia.value) return;
+  if (!fhirBundleExternoCache.value) return;
   buscando.value = true;
-  mensajeError.value = "🔄 Extrayendo registros clínicos HL7 FHIR desde clúster remoto...";
+  mensajeError.value = "🔄 Conectando con la base de datos externa... Sincronizando e integrando historial en base local con transacciones ACID...";
   
   try {
-    const resFHIR = await authStore.fetchSeguro(
-      `/expedientes/paciente/${pacienteIdExternoContingencia.value}/fhir`
-    );
-    
-    if (!resFHIR || !resFHIR.ok) {
-      throw new Error("Error de comunicación de red al extraer el Bundle FHIR remoto.");
-    }
-    
-    const fhirBundleJSON = await resFHIR.json();
-    mensajeError.value = "📦 Bundle FHIR recibido con éxito. Sincronizando e integrando historial en base local...";
-    
     let resImportar;
     let rutasAProbar = ["/expedientes/fhir/importar", "/expedientes/importar"];
     
+    // Ejecuta la inyección pasándole el fhirBundle limpio acumulado de la aduana
     for (let ruta of rutasAProbar) {
       resImportar = await authStore.fetchSeguro(ruta, {
         method: "POST",
-        body: JSON.stringify(fhirBundleJSON),
+        body: JSON.stringify(fhirBundleExternoCache.value),
       });
       if (resImportar.status !== 404) break;
     }
     
     if (resImportar.status === 404) {
-      throw new Error("El servidor central Express no tiene mapeado el endpoint de importación POST.");
+      throw new Error("El servidor central Express no tiene mapeado el endpoint transaccional de importación.");
     }
     
-    // CORRECCIÓN CRÍTICA 1: Extraer los datos de la respuesta ANTES de evaluarla
     const resultadoImportacion = await resImportar.json();
     
     if (resImportar.ok) {
       mensajeError.value = null;
-      alert(`✅ ¡Interoperabilidad Exitosa! El expediente HL7 FHIR ha sido integrado con éxito en los registros locales.`);
+      alert(`✅ ¡Interoperabilidad Exitosa! El expediente clínico HL7 FHIR ha sido integrado con éxito en los registros locales.`);
       
-      // Mapeo seguro del ID local recién generado por tu API
-      const idPacienteLocalNuevo =
-        resultadoImportacion.paciente_id ||
-        resultadoImportacion.id ||
-        resultadoImportacion.expediente_id ||
-        resultadoImportacion.paciente?._id;
-
+      const idPacienteLocalNuevo = resultadoImportacion.paciente_id || resultadoImportacion.id || resultadoImportacion.expediente_id;
+      
+      // Limpieza atómica de la caché asistencial perimetral
       rutBusqueda.value = "";
       pacienteIdExternoContingencia.value = null;
-      origenDatos.value = "local"; // Actualizamos el origen para activar la UI del médico
-
+      fhirBundleExternoCache.value = null;
+      origenDatos.value = "local"; 
+      
       if (idPacienteLocalNuevo && idPacienteLocalNuevo.length === 24) {
-       mensajeError.value = "✅ Expediente importado. Vuelva a consultar el RUT para visualizar los datos.";
+        setTimeout(() => {
+          componenteKey.value++; // Limpia el DOM y elimina residuos reactivos de memoria
+          router.push(`/paciente/${idPacienteLocalNuevo}`);
+        }, 50);
       } else {
         await consultarSistemaNacional();
       }
     } else {
-      // Ahora resultadoImportacion ya existe de manera segura
-      throw new Error(resultadoImportacion.msg || "El clúster rechazó la adición del expediente clínico.");
+      throw new Error(resultadoImportacion.msg || "El clúster transaccional rechazó la adición del expediente.");
     }
   } catch (error) {
-    console.error("⚠️ Error en pasarela de importación:", error.message);
+    console.error("⚠️ Error en pasarela de importación asistencial:", error.message);
     mensajeError.value = `⚠️ Falla de Interoperabilidad: ${error.message}`;
     alert(`⚠️ No se pudo importar: ${error.message}`);
   } finally {
-    // CORRECCIÓN CRÍTICA 2: El botón SE APAGA SÍ O SÍ, pase lo que pase, evitando congelamientos
     buscando.value = false;
   }
 };
 
-
-
-
-// REEMPLAZAR POR ESTA NUEVA FUNCIÓN ADAPTADA
+// Guardado tradicional de consultas para pacientes recurrentes (Validación de Zod en la API)
 const ejecutarGuardadoDesdeDashboard = async (payload) => {
   guardandoNuevaConsulta.value = true;
   try {
@@ -740,93 +699,78 @@ const ejecutarGuardadoDesdeDashboard = async (payload) => {
         descripcion: payload.descripcion,
       }),
     });
-
     if (!respuesta) return;
     const datos = await respuesta.json();
-
     if (respuesta.ok) {
       alert("✅ Evento clínico e informe patológico CIE-10 anexados con éxito.");
-      
-      // LIMPIEZA REACTIVA: Le ordena al formulario hijo resetear sus campos locales
-      payload.resetForm(); 
+      payload.resetForm(); // Le ordena al formulario hijo limpiar sus inputs locales
       formularioNuevaAtencionAbierto.value = false;
-      
-      // Sincroniza el dashboard con los datos actualizados del clúster
       await consultarSistemaNacional();
     } else {
-      throw new Error(datos.msg || "El clúster rechazó la adición del evento clínico.");
+      throw new Error(datos.msg || "El clúster rechazó el registro.");
     }
   } catch (error) {
-    console.error(error);
     alert(`⚠️ Error al registrar consulta: ${error.message}`);
   } finally {
     guardandoNuevaConsulta.value = false;
   }
 };
 
-
-
-// Función de redirección inyectando de forma automatizada el RUT en la caché de sesión
 const redirigirAlRegistroExpress = () => {
   const rutParaLlevar = limpiarRutBuscador(rutBusqueda.value);
   sessionStorage.setItem("rut_urgencia", rutParaLlevar);
   router.push("/nueva-ficha");
 };
 
-
-
+// GANCHOS DE MONTADO Y OBSERVADORES CRÍTICOS EN CALIENTE
 onMounted(() => {
-  // Inicialización básica, sin cargar ficha por ID automático
-  paciente.value = null;
-  historial.value = [];
-  diagnosticos.value = [];
-  bitacoraAccesos.value = [];
+  const idPacienteURL = route.params.pacienteId || route.params.id;
+  if (idPacienteURL && idPacienteURL.length === 24) {
+    cargarFichaPorIdDirecto(idPacienteURL);
+  }
 });
 
+watch(
+  () => route.params.id || route.params.pacienteId,
+  (nuevoId) => {
+    if (nuevoId && nuevoId.length === 24) {
+      cargarFichaPorIdDirecto(nuevoId);
+    } else if (!nuevoId) {
+      paciente.value = null;
+      historial.value = [];
+      cerrarFichaClinica();
+    }
+  },
+  { immediate: true },
+);
 
-// ====================================================================
-// SERVICIO CENTRALIZADO DE AUDITORÍA FORENSE IDEMPOTENTE
-// ====================================================================
+// SERVICIO CENTRALIZADO DE AUDITORÍA FORENSE IDEMPOTENTE (OWASP / DEIS LEY 20.584)
 const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
   if (!pacienteId) return;
-  
   try {
-    // Hacemos uso del método fetchSeguro de tu propio authStore para heredar las cabeceras
     const respuesta = await authStore.fetchSeguro("/bitacora/registrar", {
       method: "POST",
-      body: JSON.stringify({
-        paciente_id: pacienteId,
-        atencion_id: atencionId
-      })
+      body: JSON.stringify({ paciente_id: pacienteId, atencion_id: atencionId })
     });
-
     if (respuesta && respuesta.ok) {
       const datosLog = await respuesta.json();
-      console.log(`🔒 Estado Auditoría: ${datosLog.msg}`);
-      
-      // OPTIMIZACIÓN REACTIVA: Si el log es nuevo (201), refrescamos la lista visual 
-      // para que el médico vea su propia firma reflejada inmediatamente sin recargar la página
       if (respuesta.status === 201 && datosLog.acceso) {
-        // Mapeamos el campo startTime que pide Vue
         const nuevoLogFormateado = {
           ...datosLog.acceso,
           startTime: datosLog.acceso.fecha_consulta || new Date().toISOString()
         };
-        // Lo empujamos al inicio del arreglo visual
         bitacoraAccesos.value.unshift(nuevoLogFormateado);
       }
     }
   } catch (error) {
     console.error("⚠️ Fallo de comunicación en bus de auditoría:", error.message);
-  }finally {
-    // 🚀 CONTROL CRÍTICO: Garantiza que el spinner y el estado de "Buscando..." 
-    // se desactiven por completo si el backend local tarda en responder
-    buscando.value = false;
+  } finally {
+    buscando.value = false; // Desactiva de forma segura el estado de carga
   }
 };
 
-
 </script>
+
 
 
 
