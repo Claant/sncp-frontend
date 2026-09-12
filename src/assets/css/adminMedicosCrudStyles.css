@@ -1,5 +1,42 @@
+
 /* ====================================================================
-   ESTILOS DE LA TABLA Y NÓMINA DE MÉDICOS
+   📦 SISTEMA DE REJILLA Y ALINEACIÓN FORENSE ASISTENCIAL
+   ==================================================================== */
+/* Limpiamos herencias fantasmas y configuramos márgenes relativos puros */
+.admin-encabezado {
+  width: 100%;
+  margin-bottom: 25px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.admin-encabezado h2 {
+  margin: 0 0 6px 0 !important;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--clinico-oscuro); /* Recupera tu verde oscuro de baseStyles */
+  line-height: 1.2;
+}
+
+.admin-encabezado p {
+  margin: 0 !important;
+  font-size: 0.92rem;
+  color: var(--texto-secundario);
+  line-height: 1.4;
+}
+
+/* 🚀 EL AJUSTE MAESTRO: Removemos el fondo duplicado y los paddings innecesarios */
+.tarjeta-listado {
+  background: transparent !important; /* Elimina la doble tarjeta blanca */
+  padding: 0 !important;             /* Alineación matemática exacta al borde izquierdo */
+  border: none !important;            /* Evita dobles bordes grises */
+  box-shadow: none !important;        /* Quita sombras redundantes */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ====================================================================
+   ESTILOS INTERNOS DE LA TABLA Y NÓMINA DE MÉDICOS
    ==================================================================== */
 .cargando-tabla {
   text-align: center;
@@ -11,10 +48,12 @@
 
 .celda-principal {
   font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--clinico-oscuro);
 }
 
 .celda-secundaria {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--texto-secundario);
   margin-top: 2px;
 }
@@ -28,7 +67,6 @@
 /* ====================================================================
    CONTROLADORES DINÁMICOS DE BOTONES (CRUD / ACCIONES)
    ==================================================================== */
-/* Botón en estado Habilitado (Muestra opción de Suspender en Gris/Rojo) */
 .boton-cerrar-sesion.btn-suspender {
   background-color: #64748b;
 }
@@ -37,7 +75,6 @@
   background-color: var(--error);
 }
 
-/* Botón en estado Suspendido (Muestra opción de Activar en Verde/Turquesa) */
 .boton-cerrar-sesion:not(.btn-suspender) {
   background-color: var(--exito);
 }
@@ -46,76 +83,26 @@
   background-color: var(--clinico-oscuro);
 }
 
-/* ====================================================================
-   CAPA MODAL (VENTANA FLOTANTE DE ACTUALIZACIÓN INTEGRADA)
-   ==================================================================== */
-.modal-sobrecapa {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(15, 23, 42, 0.4); /* Fondo semi-transparente oscuro */
-  backdrop-filter: blur(3px); /* Efecto esmerilado de fondo */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+/* Modificación de la aduana crítica de eliminación */
+.btn-eliminar-critico {
+  background-color: #dc2626 !important;
 }
-
-.modal-ventana {
-  background: var(--blanco-puro);
-  padding: 30px;
-  border-radius: 10px;
-  width: 100%;
-  max-width: 480px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--borde-suave);
-  box-sizing: border-box;
-}
-
-.modal-cabecera {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #f0fdfa;
-  padding-bottom: 10px;
-  margin-bottom: 15px;
-}
-
-.modal-cabecera h3 {
-  margin: 0;
-  color: var(--clinico-oscuro);
-  font-size: 1.2rem;
-}
-
-.btn-cerrar-modal {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  color: var(--texto-secundario);
-  cursor: pointer;
-}
-
-.btn-cerrar-modal:hover {
-  color: var(--error);
-}
-
-.formulario-modal {
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-acciones {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 25px;
+.btn-eliminar-critico:hover {
+  background-color: #991b1b !important;
 }
 
 /* ====================================================================
    🚀 COMPLEMENTO: ESTILOS PARA LA BOTONERA DE PAGINACIÓN DE MÉDICOS
    ==================================================================== */
+.paginacion {
+  margin-top: 20px;
+  padding: 15px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
 .paginacion button {
   background-color: #0284c7;
   color: #ffffff;
@@ -126,6 +113,7 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s ease, opacity 0.2s ease;
+  width: auto;
 }
 
 .paginacion button:hover:not(:disabled) {
@@ -138,3 +126,4 @@
   cursor: not-allowed;
   opacity: 0.7;
 }
+
