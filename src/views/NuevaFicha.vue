@@ -108,7 +108,7 @@
             </div>
             <div class="campo expandido">
               <label>Descripción Diagnóstica Detallada</label>
-              <textarea v-model="formulario.descripcion" rows="3" placeholder="Escriba las conclusiones patológicas definitivas del alta..."></textarea>
+              <textarea v-model="formulario.descripcion" rows="3" placeholder="Escriba las conclusiones patológicas para el alta del paciente"></textarea>
             </div>
           </div>
         </div>

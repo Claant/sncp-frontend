@@ -182,7 +182,7 @@ const procesarRegistroPaciente = async () => {
       const datosDireccion = await resDireccion.json();
 
       if (!resDireccion.ok) {
-        throw new Error(datosDireccion.msg || 'Falla crítica al registrar la dirección residencial.');
+        throw new Error(datosDireccion.msg || 'Falla crítica al registrar la dirección');
       }
 
       direccionIdFinal = datosDireccion.direccion?._id || datosDireccion.direccion?.id; // Captura el ID real de Atlas

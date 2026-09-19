@@ -53,8 +53,7 @@
       <p>{{ mensajeError }}</p>
       <div v-if="origenDatos === 'externo'" class="mt-2">
         <p class="small text-secondary mb-2">
-          Se detectó un expediente clínico remoto disponible en formato HL7
-          FHIR.
+          Se detectó un expediente clínico en el Cesfam Las Compañias, ciudad de la Serena.
         </p>
         <button
           type="button"
@@ -67,8 +66,7 @@
       </div>
       <div v-if="origenDatos === 'ninguno'" class="mt-2">
         <p class="small text-secondary mb-2">
-          El ciudadano no posee historial clínico vigente. Puede iniciar una
-          ficha clínica nueva si corresponde.
+          El paciente no registra historial clínico en centros médcios externos
         </p>
         <button
           type="button"
@@ -191,7 +189,7 @@
                 }}
               </button>
 
-              <!-- 🚀 BOTÓN DAU PDF: Emisión e Impresión del Formato Oficial de Urgencia Chileno -->
+              <!-- BOTÓN DAU PDF: Emisión e Impresión del Formato Oficial de Urgencia Chileno -->
               <button
                 type="button"
                 @click="imprimirDauOficial(atencion)"
@@ -199,7 +197,7 @@
                 style="background-color: #10b981; border: none; padding: 10px 18px; font-size: 0.85rem; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; gap: 5px; width: auto;"
                 :disabled="buscando"
               >
-                📄 Imprimir DAU
+                Imprimir Ficha clínica
               </button>
             </div>
           </div>
@@ -362,9 +360,9 @@
           >Aviso de Confidencialidad (Ley de Derechos del Paciente):</strong
         >
         Su perfil institucional (Administrador) le autoriza exclusivamente a
-        gestionar los RR HH del personal de salud y al alta de infraestructura de centros de salud. Las fichas médicas y códigos de
-        diagnóstico CIE-10 se encuentran restringidos para personal clínico
-        acreditado.
+        gestionar los RR HH del personal de salud y al alta de infraestructura de centros de salud. 
+        Las fichas médicas y códigos de diagnóstico CIE-10 se encuentran restringidos para personal
+        clínico acreditado.
       </div>
     </div>
 
@@ -397,7 +395,7 @@ const formularioNuevaAtencionAbierto = ref(false);
 const mensajeError = ref(null);
 const componenteKey = ref(0);
 
-// 🚀 CONTROL INTERACTIVO DE PASARELA: Variables nativas de origen y aduana manual
+// CONTROL INTERACTIVO DE PASARELA: Variables nativas de origen y aduana manual
 const origenDatos = ref("none"); // Puede mutar a: 'local', 'externo', 'ninguno'
 const pacienteIdExternoContingencia = ref(null);
 
@@ -408,7 +406,7 @@ const atencionSeleccionada = ref(null);
 const bitacoraAccesos = ref([]);
 const diagnosticos = ref([]);
 
-// 📦 CACHÉ PERIMETRAL: Almacena el recurso clínico FHIR recibido desde el clúster remoto
+// CACHÉ PERIMETRAL: Almacena el recurso clínico FHIR recibido desde el clúster remoto
 const fhirBundleExternoCache = ref(null);
 
 // Paginadores locales en la capa del navegador (Client-Side)
@@ -437,7 +435,7 @@ const limpiarRutBuscador = (rutRaw) => {
 };
 
 // ====================================================================
-// 🧠 PROPIEDADES COMPUTADAS DE CONTROL: INTERFAZ REACTIVA DE REJILLAS
+// PROPIEDADES COMPUTADAS DE CONTROL: INTERFAZ REACTIVA DE REJILLAS
 // ====================================================================
 const totalPaginas = computed(() => Math.ceil((historial.value?.length || 0) / porPagina) || 1);
 const historialPaginado = computed(() => {
@@ -471,7 +469,7 @@ const evaluarCriterioBusqueda = async () => {
   }
 };
 
-// 🚀 ADUANA INTERACTIVA ASISTENCIAL: Sincroniza y discrimina orígenes de red
+// ADUANA INTERACTIVA ASISTENCIAL: Sincroniza y discrimina orígenes de red
 const consultarSistemaNacional = async () => {
   buscando.value = true;
   mensajeError.value = null;
@@ -549,7 +547,7 @@ const consultarSistemaNacional = async () => {
       pacienteIdExternoContingencia.value = entradaPatientRemoto?.resource?.id || "contingencia-remota";
       
       // RESTAURACIÓN DEL MENSAJE ORIGINAL QUE ENCIENDE EL BOTÓN MANUAL
-      mensajeError.value = `Pasarela: El RUT ${rutSanitizado} no posee registros locales. La Pasarela detectó un expediente externo disponible en formato HL7 FHIR en otra instancia remota.`;
+      mensajeError.value = `Pasarela: El RUT ${rutSanitizado} no posee registros locales. La plataforma detectó un expediente disponible en el cesfam Las Compañias de la Serena.`;
     }
 
   } catch (error) {
@@ -640,7 +638,7 @@ const toggleFichaClinica = async (atencion) => {
 const ejecutarImportacionFHIRDesdeDashboard = async () => {
   if (!fhirBundleExternoCache.value) return;
   buscando.value = true;
-  mensajeError.value = "🔄 Conectando con la base de datos externa... Sincronizando e integrando historial en base local con transacciones ACID...";
+  mensajeError.value = "🔄 Conectando con la base de datos externa sistema-informacion-clinica-demo... Sincronizando e integrando historial en base local con transacciones ACID...";
   
   try {
     let resImportar;
@@ -663,7 +661,7 @@ const ejecutarImportacionFHIRDesdeDashboard = async () => {
     
     if (resImportar.ok) {
       mensajeError.value = null;
-      alert(`✅ ¡Interoperabilidad Exitosa! El expediente clínico HL7 FHIR ha sido integrado con éxito en los registros locales.`);
+      alert(`✅ ¡Interoperabilidad Exitosa! El expediente clínico ha sido integrado con éxito en la base de datos del CESFAM Emilio Schaffhauser`);
       
       const idPacienteLocalNuevo = resultadoImportacion.paciente_id || resultadoImportacion.id || resultadoImportacion.expediente_id;
       

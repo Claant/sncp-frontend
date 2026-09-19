@@ -3,7 +3,7 @@
   <div class="centros-contenedor">
     <header class="centros-header">
       <h2>Gestión de Establecimientos Asistenciales</h2>
-      <p>Alta e incorporación de nuevos centros asistenciales a la Red Nacional de Salud.</p>
+      <p>Alta e incorporación de nuevos centros asistenciales</p>
     </header>
 
     <!-- Alertas de Estado del Sistema -->

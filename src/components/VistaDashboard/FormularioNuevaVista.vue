@@ -9,11 +9,11 @@
     <form @submit.prevent="enviarFormulario">
       <div class="grid-formulario">
         <div class="campo-formulario full-width">
-          <label>Sintomatología Inicial / Motivo de Consulta</label>
+          <label>Motivo de Consulta</label>
           <textarea
             v-model="nuevaConsulta.motivo_consulta"
             rows="3"
-            placeholder="Describa la anamnesis o el motivo de la consulta actual..."
+            placeholder="Describa el motivo de la consulta actual..."
             required
             :disabled="guardando"
           ></textarea>

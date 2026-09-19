@@ -435,7 +435,7 @@ const eliminarMedicoDefinitivo = async (medico) => {
     const datos = await respuesta.json();
 
     if (respuesta && respuesta.ok) {
-      lanzarNotificacionLocal(datos.msg || 'Registro de profesional de salud eliminado de la base de datos.', 'exito');
+      lanzarNotificacionLocal(datos.msg || 'Usuario médico eliminado de la base de datos.', 'exito');
       
       const paginaDestino = (medicosFiltrados.value.length === 1 && metaPaginacion.paginaActual > 1) 
         ? metaPaginacion.paginaActual - 1 
