@@ -197,7 +197,7 @@
                 style="background-color: #10b981; border: none; padding: 10px 18px; font-size: 0.85rem; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; gap: 5px; width: auto;"
                 :disabled="buscando"
               >
-                Imprimir Ficha clínica
+                Imprimir
               </button>
             </div>
           </div>
@@ -469,7 +469,7 @@ const evaluarCriterioBusqueda = async () => {
   }
 };
 
-// ADUANA INTERACTIVA ASISTENCIAL: Sincroniza y discrimina orígenes de red
+// Sincroniza y discrimina orígenes de red
 const consultarSistemaNacional = async () => {
   buscando.value = true;
   mensajeError.value = null;
@@ -499,7 +499,7 @@ const consultarSistemaNacional = async () => {
       throw new Error(datosPac.msg || "El RUT ingresado no está registrado en este centro de salud ni tampoco en otro recinto de salud externo.");
     }
 
-    // 🚀 Escenario B: Registro clínico LOCAL vigente (Desempaquetado y Renderizado Directo)
+    // Escenario B: Registro clínico LOCAL vigente (Desempaquetado y Renderizado Directo)
     if (datosPac.origen === "local") {
       const fhirBundle = datosPac.fhirBundle;
       if (fhirBundle && fhirBundle.entry) {
@@ -547,7 +547,7 @@ const consultarSistemaNacional = async () => {
       pacienteIdExternoContingencia.value = entradaPatientRemoto?.resource?.id || "contingencia-remota";
       
       // RESTAURACIÓN DEL MENSAJE ORIGINAL QUE ENCIENDE EL BOTÓN MANUAL
-      mensajeError.value = `Pasarela: El RUT ${rutSanitizado} no posee registros locales. La plataforma detectó un expediente disponible en el cesfam Las Compañias de la Serena.`;
+      mensajeError.value = `El RUT ${rutSanitizado} no posee registros clínicos en este CESFAM.`;
     }
 
   } catch (error) {
@@ -661,7 +661,7 @@ const ejecutarImportacionFHIRDesdeDashboard = async () => {
     
     if (resImportar.ok) {
       mensajeError.value = null;
-      alert(`✅ ¡Interoperabilidad Exitosa! El expediente clínico ha sido integrado con éxito en la base de datos del CESFAM Emilio Schaffhauser`);
+      alert(`¡Interoperabilidad Exitosa! El expediente clínico ha sido integrado con éxito en la base de datos del CESFAM Emilio Schaffhauser`);
       
       const idPacienteLocalNuevo = resultadoImportacion.paciente_id || resultadoImportacion.id || resultadoImportacion.expediente_id;
       
@@ -707,7 +707,7 @@ const ejecutarGuardadoDesdeDashboard = async (payload) => {
     if (!respuesta) return;
     const datos = await respuesta.json();
     if (respuesta.ok) {
-      alert("✅ Evento clínico e informe patológico CIE-10 anexados con éxito.");
+      alert("Evento clínico e informe patológico CIE-10 anexados con éxito.");
       payload.resetForm(); // Le ordena al formulario hijo limpiar sus inputs locales
       formularioNuevaAtencionAbierto.value = false;
       await consultarSistemaNacional();
