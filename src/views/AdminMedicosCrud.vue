@@ -82,57 +82,60 @@
                   {{ medico.activo !== false ? "Habilitado" : "Suspendido" }}
                 </span>
               </td>
-              <td class="celda-acciones">
-                <!-- Botón 1: Abrir Modal de Edición -->
-                <button
-                  type="button"
-                  @click="abrirEditor(medico)"
-                  class="btn-siguiente"
-                  style="
-                    width: auto;
-                    padding: 6px 12px;
-                    font-size: 0.8rem;
-                    background-color: #0284c7;
-                  "
-                >
-                  Editar
-                </button>
+              <td style="vertical-align: middle;">
+  <div class="celda-acciones">
+    <!-- Botón 1: Abrir Modal de Edición -->
+    <button
+      type="button"
+      @click="abrirEditor(medico)"
+      class="btn-siguiente"
+      style="
+        width: auto;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        background-color: #0284c7;
+      "
+    >
+      Editar
+    </button>
 
-                <!-- Botón 2: Alternar Estado Lógico (Activo/Inactivo) -->
-                <button
-                  type="button"
-                  @click="alternarEstadoMedico(medico)"
-                  :class="[
-                    'boton-cerrar-sesion',
-                    { 'btn-suspender': medico.activo !== false },
-                  ]"
-                  style="
-                    width: auto;
-                    padding: 6px 12px;
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                  "
-                  :disabled="procesandoId === medico._id"
-                >
-                  {{ medico.activo !== false ? "Suspender" : "✅ Activar" }}
-                </button>
+    <!-- Botón 2: Alternar Estado Lógico (Activo/Inactivo) -->
+    <button
+      type="button"
+      @click="alternarEstadoMedico(medico)"
+      :class="[
+        'boton-cerrar-sesion',
+        { 'btn-suspender': medico.activo !== false },
+      ]"
+      style="
+        width: auto;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      "
+      :disabled="procesandoId === medico._id"
+    >
+      {{ medico.activo !== false ? "Suspender" : "✅ Activar" }}
+    </button>
 
-                <!-- Botón 3: Eliminación física definitiva en Atlas -->
-                <button
-                  type="button"
-                  @click="eliminarMedicoDefinitivo(medico)"
-                  class="boton-cerrar-sesion btn-eliminar-critico"
-                  style="
-                    width: auto;
-                    padding: 6px 12px;
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                  "
-                  :disabled="procesandoId === medico._id"
-                >
-                  Eliminar
-                </button>
-              </td>
+    <!-- Botón 3: Eliminación física definitiva en Atlas -->
+    <button
+      type="button"
+      @click="eliminarMedicoDefinitivo(medico)"
+      class="boton-cerrar-sesion btn-eliminar-critico"
+      style="
+        width: auto;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      "
+      :disabled="procesandoId === medico._id"
+    >
+      Eliminar
+    </button>
+  </div>
+</td>
+
             </tr>
           </tbody>
         </table>

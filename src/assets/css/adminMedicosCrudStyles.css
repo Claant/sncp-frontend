@@ -136,3 +136,28 @@
   opacity: 0.7;
 }
 
+/* ====================================================================
+   🔧 CORRECCIÓN MILIMÉTRICA: ALINEACIÓN VERTICAL DE FILAS Y BOTONES
+   ==================================================================== */
+/* Fuerza a que los textos de identificación, contacto y especialidad bajen al centro */
+.tabla-contenedor table tbody tr td {
+    vertical-align: middle !important;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+}
+
+/* 2. Recalibra el contenedor de acciones para evitar deformaciones */
+/* Modifica la clase existente para que actúe sobre el div interno de forma compacta */
+.celda-acciones {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    height: 100% !important;
+}
+/* 3. Elimina herencias o márgenes basura de los botones del CRUD */
+.celda-acciones button {
+    margin: 0 !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;        /* Evita que los botones se achiquen en pantallas medianas */
+}
