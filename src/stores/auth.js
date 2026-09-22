@@ -223,7 +223,7 @@ export const useAuthStore = defineStore("auth", {
     // esto quiere decir que si el backend no responde, se reintentara 3 veces antes de mostrar un error al usuario
     // Si las credenciales son válidas, guarda el token y el usuario en el estado de Pinia y en localStorage, e inicia los temporizadores de seguridad.
     // los tres intentos si el backend no responde son automaticos.
-    async iniciarSesion(correo, password) {
+   async iniciarSesion(correo, password) {
       const maxReintentos = 3;
       let intentoActual = 0;
       let respuesta = null;
@@ -238,12 +238,13 @@ export const useAuthStore = defineStore("auth", {
           });
           datos = await respuesta.json();
 
-          if (respuesta.status === 429){
-            return{
+          // ✅ CORREGIDO: Detección limpia de IP Bloqueada (429)
+          if (respuesta.status === 429) {
+            return {
               exito: false,
-              error: datos.msg || "Demasiados intentos. Su IP ha sido bloqueada temporalmente".
-            }
-          },
+              error: datos.msg || "Demasiados intentos. Su IP ha sido bloqueada temporalmente."
+            };
+          }
 
           break; // Si la petición fue exitosa (con o sin error de credenciales), rompemos el bucle
 
@@ -261,7 +262,7 @@ export const useAuthStore = defineStore("auth", {
             };
           }
 
-          // Espera 1.5 segundos antes de lanzar el siguiente intento para darle aire al Backend
+          // Espera 1.5 segundos antes de lanzar el siguiente intento
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       }
