@@ -324,7 +324,7 @@ import { useAuthStore } from "../stores/auth.js";
 // Conexión directa mediante alias para evitar quiebres de rutas relativas
 import FormularioNuevaAtencion from "@/components/VistaDashboard/FormularioNuevaVista.vue";
 // Importación del componente de PDF
-import PdfServiceDashboard from "@/components/pdfServiceDashboard.vue";
+import PdfServiceDashboard from "@/components/VistaDashboard/pdfServiceDashboard.vue";
 import BitacoraAuditoria from "@/components/VistaDashboard/BitacoraAuditoria.vue";
 
 const route = useRoute();
