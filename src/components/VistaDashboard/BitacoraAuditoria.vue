@@ -1,11 +1,14 @@
-<!-- src/components/VistaDashboard/BitacoraAuditoria.vue -->
 <template>
+  <!-- BITÁCORA LEGAL DE AUDITORÍA DE ACCESOS -->
   <div class="contenedor-logs-auditoria">
     <h5 class="titulo-bitacora">
       Consultas al Historial Clínico del Paciente
     </h5>
 
-    <div v-if="bitacora.length === 0" class="sin-diagnostico-alerta">
+    <div
+      v-if="bitacoraAccesos.length === 0"
+      class="sin-diagnostico-alerta"
+    >
       Sincronizando registros de auditoría...
     </div>
 
@@ -32,20 +35,22 @@
 
     <!-- Controles de paginación de la bitácora -->
     <div
-      v-if="bitacora.length > 0"
+      v-if="bitacoraAccesos.length > 0"
       class="paginacion"
       style="margin-top: 15px"
     >
       <button
-        @click="paginaActual--"
-        :disabled="paginaActual === 1"
+        type="button"
+        @click="paginaBitacora--"
+        :disabled="paginaBitacora === 1"
       >
         Anterior
       </button>
-      <span>Página {{ paginaActual }} de {{ totalPaginas }}</span>
+      <span>Página {{ paginaBitacora }} de {{ totalPaginasBitacora }}</span>
       <button
-        @click="paginaActual++"
-        :disabled="paginaActual === totalPaginas"
+        type="button"
+        @click="paginaBitacora++"
+        :disabled="paginaBitacora === totalPaginasBitacora"
       >
         Siguiente
       </button>
@@ -54,10 +59,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 
 const props = defineProps({
-  bitacora: {
+  bitacoraAccesos: {
     type: Array,
     default: () => []
   },
@@ -67,15 +72,24 @@ const props = defineProps({
   }
 });
 
-const paginaActual = ref(1);
-const porPagina = 3;
+// Paginación exacta original del Dashboard
+const paginaBitacora = ref(1);
+const porPaginaBitacora = 3;
 
-const totalPaginas = computed(() => 
-  Math.ceil((props.bitacora?.length || 0) / porPagina) || 1
+// Reinicia la página al cambiar el paciente o la atención seleccionada
+watch(
+  () => props.bitacoraAccesos,
+  () => {
+    paginaBitacora.value = 1;
+  }
+);
+
+const totalPaginasBitacora = computed(() => 
+  Math.ceil((props.bitacoraAccesos?.length || 0) / porPaginaBitacora) || 1
 );
 
 const bitacoraPaginada = computed(() => {
-  const inicio = (paginaActual.value - 1) * porPagina;
-  return (props.bitacora || []).slice(inicio, inicio + porPagina);
+  const inicio = (paginaBitacora.value - 1) * porPaginaBitacora;
+  return (props.bitacoraAccesos || []).slice(inicio, inicio + porPaginaBitacora);
 });
 </script>
