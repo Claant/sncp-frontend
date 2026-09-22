@@ -79,3 +79,8 @@ const bitacoraPaginada = computed(() => {
   return (props.bitacora || []).slice(inicio, inicio + porPagina);
 });
 </script>
+
+<style scoped>
+/* Importación del CSS para que aplique al componente desacoplado */
+@import "@/assets/css/dashboardStyles.css";
+</style>
