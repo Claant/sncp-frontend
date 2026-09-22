@@ -224,63 +224,62 @@ export const useAuthStore = defineStore("auth", {
     // Si las credenciales son válidas, guarda el token y el usuario en el estado de Pinia y en localStorage, e inicia los temporizadores de seguridad.
     // los tres intentos si el backend no responde son automaticos.
    async iniciarSesion(correo, password) {
-      const maxReintentos = 3;
-      let intentoActual = 0;
-      let respuesta = null;
-      let datos = null;
+  const maxReintentos = 3;
+  let intentoActual = 0;
+  let respuesta = null;
+  let datos = null;
 
-      while (intentoActual < maxReintentos) {
-        try {
-          respuesta = await fetch(`${API_URL}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ correo, password }),
-          });
-          datos = await respuesta.json();
+  while (intentoActual < maxReintentos) {
+    try {
+      respuesta = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo, password }),
+      });
+      datos = await respuesta.json();
 
-          // ✅ CORREGIDO: Detección limpia de IP Bloqueada (429)
-          if (respuesta.status === 429) {
-            return {
-              exito: false,
-              error: datos.msg || "Demasiados intentos. Su IP ha sido bloqueada temporalmente."
-            };
-          }
-
-          break; // Si la petición fue exitosa (con o sin error de credenciales), rompemos el bucle
-
-        } catch (error) {
-          intentoActual++;
-          console.warn(
-            `⚠️ Intento ${intentoActual} fallido en canal de autenticación local. Reintentando...`,
-          );
-
-          if (intentoActual >= maxReintentos) {
-            return {
-              exito: false,
-              error:
-                "El servidor clínico local no responde. Verifique que el Backend esté encendido.",
-            };
-          }
-
-          // Espera 1.5 segundos antes de lanzar el siguiente intento
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-        }
+      // Detección limpia del bloqueo por Rate Limit (429)
+      if (respuesta.status === 429) {
+        return {
+          exito: false,
+          error: datos.msg || "Demasiados intentos. Su IP ha sido bloqueada temporalmente.",
+        };
       }
 
-      try {
-        if (!respuesta.ok)
-          throw new Error(datos.msg || "Credenciales inválidas.");
+      break; // Petición procesada con éxito (200 OK o 401 Credenciales Inválidas)
+    } catch (error) {
+      intentoActual++;
+      console.warn(
+        `⚠️ Intento ${intentoActual} fallido en canal de autenticación local. Reintentando...`,
+      );
 
-        this.token = datos.token;
-        this.usuario = datos.usuario;
-        localStorage.setItem("token", datos.token);
-        localStorage.setItem("usuario", JSON.stringify(datos.usuario));
-        this.inicializarRelojesSeguridad();
-        return { exito: true };
-      } catch (error) {
-        return { exito: false, error: error.message };
+      if (intentoActual >= maxReintentos) {
+        return {
+          exito: false,
+          error:
+            "El servidor clínico local no responde. Verifique que el Backend esté encendido.",
+        };
       }
-    },
+
+      // Espera 1.5 segundos antes de lanzar el siguiente intento
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+  }
+
+  try {
+    if (!respuesta.ok)
+      throw new Error(datos.msg || "Credenciales inválidas.");
+
+    this.token = datos.token;
+    this.usuario = datos.usuario;
+    localStorage.setItem("token", datos.token);
+    localStorage.setItem("usuario", JSON.stringify(datos.usuario));
+    this.inicializarRelojesSeguridad();
+    return { exito: true };
+  } catch (error) {
+    return { exito: false, error: error.message };
+  }
+},
 
     // #################### CIERRE ################### //
 
