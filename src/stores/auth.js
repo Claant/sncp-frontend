@@ -243,7 +243,7 @@ export const useAuthStore = defineStore("auth", {
               exito: false,
               error: datos.msg || "Demasiados intentos. Su IP ha sido bloqueada temporalmente".
             }
-          }
+          },
 
           break; // Si la petición fue exitosa (con o sin error de credenciales), rompemos el bucle
 
