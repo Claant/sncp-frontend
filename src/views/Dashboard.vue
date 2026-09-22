@@ -537,7 +537,7 @@ const consultarSistemaNacional = async () => {
       }
     }
     
-    // 🚀 Escenario C: Registro clínico EXTERNO remoto (Bloqueo preventivo y Activación de Alerta)
+    // Escenario C: Registro clínico EXTERNO remoto (Bloqueo preventivo y Activación de Alerta)
     else if (datosPac.origen === "externo") {
       // Almacenamos el fhirBundle de forma íntegra en la caché local para el posterior commit
       fhirBundleExternoCache.value = datosPac.fhirBundle;
@@ -692,6 +692,7 @@ const ejecutarImportacionFHIRDesdeDashboard = async () => {
 };
 
 // Guardado tradicional de consultas para pacientes recurrentes (Validación de Zod en la API)
+// ✅ CÓDIGO REFACTORIZADO Y PERSONALIZADO
 const ejecutarGuardadoDesdeDashboard = async (payload) => {
   guardandoNuevaConsulta.value = true;
   try {
@@ -704,18 +705,29 @@ const ejecutarGuardadoDesdeDashboard = async (payload) => {
         descripcion: payload.descripcion,
       }),
     });
+
     if (!respuesta) return;
     const datos = await respuesta.json();
+
     if (respuesta.ok) {
-      alert("Evento clínico e informe patológico CIE-10 anexados con éxito.");
+      alert("✅ Evento clínico e informe patológico CIE-10 anexados con éxito.");
       payload.resetForm(); // Le ordena al formulario hijo limpiar sus inputs locales
       formularioNuevaAtencionAbierto.value = false;
       await consultarSistemaNacional();
     } else {
-      throw new Error(datos.msg || "El clúster rechazó el registro.");
+      // 💡 CAPTURA INTELIGENTE DE ERRORES DETALLADOS DE ZOD:
+      if (datos.detalles && Array.isArray(datos.detalles) && datos.detalles.length > 0) {
+        // Formateamos los errores validados por Zod en viñetas claras
+        const listaErrores = datos.detalles.map(d => `• ${d.mensaje}`).join('\n');
+        alert(` No se pudo registrar la consulta médica:\n\n${listaErrores}`);
+      } else {
+        // Si es un error general no asociado a validación de formulario
+        alert(`⚠️ ${datos.msg || "El clúster rechazó el registro."}`);
+      }
     }
   } catch (error) {
-    alert(`⚠️ Error al registrar consulta: ${error.message}`);
+    console.error("Error en guardado de atención médica:", error);
+    alert(` No se pudo conectar con el servidor: ${error.message}`);
   } finally {
     guardandoNuevaConsulta.value = false;
   }
