@@ -10,7 +10,7 @@
       </p>
     </header>
 
-<!-- BUSCADOR PRINCIPAL POR RUT -->
+
 <!-- BUSCADOR PRINCIPAL POR RUT -->
 <section v-if="!route.params.id" class="seccion-busqueda">
   <form @submit.prevent="evaluarCriterioBusqueda" class="formulario-busqueda">
@@ -189,16 +189,8 @@
                 }}
               </button>
 
-              <!-- BOTÓN DAU PDF: Emisión e Impresión del Formato Oficial de Urgencia Chileno -->
-              <button
-                type="button"
-                @click="imprimirDauOficial(atencion)"
-                class="btn-siguiente"
-                style="background-color: #10b981; border: none; padding: 10px 18px; font-size: 0.85rem; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; gap: 5px; width: auto;"
-                :disabled="buscando"
-              >
-                Imprimir
-              </button>
+              <!-- Botón 2: COMPONENTE ENCAPSULADO DE IMPRESIÓN PDF -->
+                <PdfServiceDashboard :atencion-id="atencion._id" />
             </div>
           </div>
 
@@ -286,65 +278,16 @@
               Cargando conclusiones patológicas desde Atlas...
             </div>
 
-            <!-- BITÁCORA LEGAL DE AUDITORÍA DE ACCESOS -->
-            <div class="contenedor-logs-auditoria">
-              <h5 class="titulo-bitacora">
-                Consultas al Historial Clínico del Paciente
-              </h5>
 
-              <div
-                v-if="bitacoraAccesos.length === 0"
-                class="sin-diagnostico-alerta"
-              >
-                Sincronizando registros de auditoría...
-              </div>
 
-              <ul v-else class="lista-logs-auditoria">
-                <li
-                  v-for="log in bitacoraPaginada"
-                  :key="log._id"
-                  class="item-log-auditoria"
-                >
-                  <span
-                    >Dr(a).
-                    {{ log.nombre_medico || "Médico Consultante" }}</span
-                  >
-                  <span class="badge-rol-auditado"
-                    >Rol: {{ log.rol_consultado || "medico" }}</span
-                  >
-                  <span v-if="log.atencion_id" class="folio-log">
-                    Folio Ficha: #{{ log.atencion_id.slice(-6).toUpperCase() }}
-                  </span>
-                  <div class="fecha-log-auditado">
-                    📅 {{ formatearFechaHora(log.fecha_consulta) }}
-                  </div>
-                </li>
-              </ul>
 
-              <!-- Controles de paginación de la bitácora -->
-              <div
-                v-if="bitacoraAccesos.length > 0"
-                class="paginacion"
-                style="margin-top: 15px"
-              >
-                <button
-                  @click="paginaBitacora--"
-                  :disabled="paginaBitacora === 1"
-                >
-                  Anterior
-                </button>
-                <span
-                  >Página {{ paginaBitacora }} de
-                  {{ totalPaginasBitacora }}</span
-                >
-                <button
-                  @click="paginaBitacora++"
-                  :disabled="paginaBitacora === totalPaginasBitacora"
-                >
-                  Siguiente
-                </button>
-              </div>
-            </div>
+          <!-- BITÁCORA LEGAL DE AUDITORÍA DE ACCESOS ENCAPSULADA -->
+<BitacoraAuditoria 
+  :bitacora="bitacoraAccesos" 
+  :formatear-fecha-hora="formatearFechaHora" 
+/>
+
+
           </div>
         </div>
       </article>
@@ -380,6 +323,9 @@ import { useAuthStore } from "../stores/auth.js";
 
 // Conexión directa mediante alias para evitar quiebres de rutas relativas
 import FormularioNuevaAtencion from "@/components/VistaDashboard/FormularioNuevaVista.vue";
+// Importación del componente de PDF
+import PdfServiceDashboard from "@/components/pdfServiceDashboard.vue";
+import BitacoraAuditoria from "@/components/VistaDashboard/BitacoraAuditoria.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -410,8 +356,7 @@ const diagnosticos = ref([]);
 const fhirBundleExternoCache = ref(null);
 
 // Paginadores locales en la capa del navegador (Client-Side)
-const paginaBitacora = ref(1);
-const porPaginaBitacora = 3;
+
 const pagina = ref(1);
 const porPagina = 3;
 
@@ -441,12 +386,6 @@ const totalPaginas = computed(() => Math.ceil((historial.value?.length || 0) / p
 const historialPaginado = computed(() => {
   const inicio = (pagina.value - 1) * porPagina;
   return (historial.value || []).slice(inicio, inicio + porPagina);
-});
-
-const totalPaginasBitacora = computed(() => Math.ceil((bitacoraAccesos.value?.length || 0) / porPaginaBitacora) || 1);
-const bitacoraPaginada = computed(() => {
-  const inicio = (paginaBitacora.value - 1) * porPaginaBitacora;
-  return (bitacoraAccesos.value || []).slice(inicio, inicio + porPaginaBitacora);
 });
 
 // ====================================================================
@@ -529,8 +468,7 @@ const consultarSistemaNacional = async () => {
       }
 
       pagina.value = 1;
-      paginaBitacora.value = 1;
-
+  
       // Disparamos la bitácora legal vinculando el ID único extraído del recurso Patient
       if (paciente.value?._id) {
         await registrarAuditoriaForense(paciente.value._id, null);
@@ -593,7 +531,7 @@ const cargarFichaPorIdDirecto = async (pacienteId) => {
       origenDatos.value = "local"; // Habilita reactivamente los v-if asistenciales del médico
       
       pagina.value = 1;
-      paginaBitacora.value = 1;
+    
       if (paciente.value?._id) {
         await registrarAuditoriaForense(paciente.value._id, null);
       }
@@ -615,7 +553,7 @@ const toggleFichaClinica = async (atencion) => {
   diagnosticos.value = [];
   bitacoraAccesos.value = [];
   cargandoDiagnostico.value = true;
-  paginaBitacora.value = 1;
+
   try {
     const resDiag = await authStore.fetchSeguro(`/diagnosticos/atencion/${atencion._id}`);
     if (resDiag && resDiag.ok) {
@@ -786,30 +724,7 @@ const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
   }
 };
 
-// src/views/Dashboard.vue (Función en el <script setup> de Vue 3)
-const imprimirDauOficial = async (atencion) => {
-  try {
-    // LLamado seguro inyectando las cabeceras Bearer del token clínico de Pinia
-    const respuesta = await authStore.fetchSeguro(`/atenciones/${atencion._id}/pdf`);
-    
-    if (respuesta && respuesta.ok) {
-      const blob = await respuesta.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `DAU-Folio-${atencion._id.slice(-6).toUpperCase()}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    }
-  } catch (error) {
-    alert(`⚠️ No se pudo imprimir el reporte: ${error.message}`);
-  }
-};
-
-
 </script>
-
 
 
 
