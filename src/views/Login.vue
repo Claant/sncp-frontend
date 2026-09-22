@@ -76,35 +76,44 @@ const credenciales = reactive({
   password: ''
 });
 
-// CAPTURA INTELEGENTE: Captura alertas forenses enviadas en la URL por Pinia ante cierres forzados
+// ################# MUESTRA ALERTAS POR CIERRE FORZADO #################### //
 onMounted(() => {
   const alertaMotivo = route.query.alerta;
   
   if (alertaMotivo) {
     if (alertaMotivo === 'inactivo') {
-      error.value = 'Su sesión ha sido cerrada automáticamente debido a inactividad en la estación de trabajo para resguardar la privacidad clínica.';
+      error.value = 'Su sesión ha sido cerrada automáticamente debido a inactividad en el módulo de trabajo.';
     } else if (alertaMotivo === 'suspendido') {
-      error.value = 'Su cuenta de usuario se encuentra suspendida o deshabilitada temporalmente en la Red Nacional. Contacte a Soporte.';
+      error.value = 'Su cuenta de usuario se encuentra suspendida o deshabilitada temporalmente. Contacte a Soporte.';
     } else if (alertaMotivo === 'seguridad') {
       error.value = 'Acceso denegado de forma perimetral: Intento de violación de políticas de privilegios RBAC.';
     } else if (alertaMotivo === 'expirado') {
-      error.value = 'Su sesión ha expirado tras cumplir el límite reglamentario de 3 minutos.';
+      error.value = 'Su sesión ha expirado tras cumplir el límite reglamentario de 5 minutos.';
     }
   }
 });
+// ################# CIERRE #################### //
+
 
 // Despacho seguro del formulario hacia la acción central de Pinia
 const procesarAcceso = async () => {
   estaCargando.value = true;
   error.value = null;
 
-  // Sanitización perimetral rápida
+  // ################# SANITIZACION DE FORMULARIO #################### //
+  // limpia los espacios accidentales y convierte el correo a minusculas antes de enviarlo al servidor, previniendo errores de tipeo
   const correoSanitizado = credenciales.correo.trim().toLowerCase();
   const passwordIngresada = credenciales.password;
 
-  try {
-    const resultado = await authStore.iniciarSesion(correoSanitizado, passwordIngresada);
+// ################# CIERRE #################### //
 
+  try {
+    // ###################### PROCESAMIENTO Y REINTENTOS DE INICIO DE SESION TOTAL 3 INTENTOS ####################### //
+    // procesa el inicio de sesion con tres intentos conforme a lo definido en auth.js si falla el backend 
+    const resultado = await authStore.iniciarSesion(correoSanitizado, passwordIngresada);
+    // ################# CIERRE #################### //
+
+// ############ ENRUTAMIENTO POR ROL RBAC ##################### //
     if (resultado.exito) {
       const rolUsuario = authStore.obtenerRol;
       
@@ -127,6 +136,9 @@ const procesarAcceso = async () => {
     estaCargando.value = false;
   }
 };
+
+   // ################# CIERRE #################### //
+
 </script>
 
 <style scoped>

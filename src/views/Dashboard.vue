@@ -66,7 +66,7 @@
       </div>
       <div v-if="origenDatos === 'ninguno'" class="mt-2">
         <p class="small text-secondary mb-2">
-          El paciente no registra historial clínico en centros médcios externos
+          El paciente no registra historial clínico en centros médicos de la red pública ni privada
         </p>
         <button
           type="button"
@@ -496,7 +496,7 @@ const consultarSistemaNacional = async () => {
     // Escenario A: El RUT no registra eventos médicos en ningún clúster clínico nacional
     if (!resBusqueda.ok || datosPac.origen === "ninguno") {
       origenDatos.value = "ninguno";
-      throw new Error(datosPac.msg || "El RUT ingresado no está registrado en este centro de salud ni tampoco en otro recinto de salud externo.");
+      throw new Error(datosPac.msg || "El RUT ingresado no está registrado en este centro de salud ni tampoco en otro recinto de salud externo");
     }
 
     // Escenario B: Registro clínico LOCAL vigente (Desempaquetado y Renderizado Directo)

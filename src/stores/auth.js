@@ -24,12 +24,12 @@ export const useAuthStore = defineStore("auth", {
     intervaloAlertaCierreId: null,
     boundResetearContadorInactividad: null,
   }),
-
+ // estado global 
   getters: {
-    estaAutenticado: (state) => !!state.token,
-    obtenerRol: (state) =>
+    estaAutenticado: (state) => !!state.token,  // esta autenticado ?
+    obtenerRol: (state) =>   // obtiene el rol, trim quita los espacios, toLowerCase() convierte el texto en minuscualas si esta en mayuscula es el caso de ADM que pasa a ser admin
       state.usuario?.rol ? state.usuario.rol.trim().toLowerCase() : null,
-    tiempoFormateado: (state) => {
+    tiempoFormateado: (state) => {  // tiempo formateado, convierte un total de segundos a un formato legible
       const horas = Math.floor(state.tiempoSegundos / 3600);
       const minutos = Math.floor((state.tiempoSegundos % 3600) / 60);
       const segundos = state.tiempoSegundos % 60;
@@ -38,7 +38,12 @@ export const useAuthStore = defineStore("auth", {
     },
   },
 
+
   actions: {
+// ##################### RECUPERA SESION AL RECARGAR LA PAGINA (TECLA F5) ############### //
+
+// lee el token del localStorage  y si el usuario sigue autenticado pero los relojes se detuvieron, vuelve a ejecutar inicializarRelojesSeguridad().
+
     cargarTokenPersistido() {
       if (!this.token && localStorage.getItem("token")) {
         this.token = localStorage.getItem("token");
@@ -52,8 +57,20 @@ export const useAuthStore = defineStore("auth", {
         this.inicializarRelojesSeguridad();
       }
     },
+    // ########################### CIERRE ############################ //
+
+
+
+// ######################### CONTROL DE TIEMPOS Y SEGURIDAD ######################### //
+
+// activa en paralelo dos sistemas de proteccion usando temporizadores (reloj 1 y reloj 2) de javascript (setInterval)
     inicializarRelojesSeguridad() {
       this.detenerRelojesSeguridad();
+
+
+      //######################### Reloj 1: tiempo de vida del Token ###############################//
+      // carga tiempo guardado o asigna 5 minutos (300 segundos)
+      // es un contador regresivo que por vencimiento del token.
 
       const tiempoPersistido = localStorage.getItem("tiempoSegundos");
       if (tiempoPersistido) {
@@ -67,20 +84,23 @@ export const useAuthStore = defineStore("auth", {
       this.mostrarModalInactividad = false;
       this.cuentaRegresivaCierre = 15;
 
+      // Reloj 1: Descuenta 1 segundo al tiempo de vida del Token
       this.intervaloId = setInterval(() => {
         if (this.tiempoSegundos > 0) {
           this.tiempoSegundos--;
           localStorage.setItem("tiempoSegundos", this.tiempoSegundos);
-          if (this.tiempoSegundos <= 30) {
+          if (this.tiempoSegundos <= 30) {  // si llega a 30 segundos activa mostrarAlertaAnticipada  //
             this.mostrarAlertaAnticipada = true;
           }
         } else {
           this.detenerRelojesSeguridad();
-          this.ejecutarSalidaForzada("expirado");
+          this.ejecutarSalidaForzada("expirado"); // aca expira el token
         }
       }, 1000);
 
-      this.intervaloInactivityId = setInterval(() => {
+  
+      // Reloj 2: cuenta segundos sin interacción o inactividad //
+           this.intervaloInactivityId = setInterval(() => {
         if (!this.mostrarModalInactividad) {
           this.segundosInactivo++;
           if (this.segundosInactivo >= 60) {
@@ -94,12 +114,20 @@ export const useAuthStore = defineStore("auth", {
         this.resetearContadorInactividad.bind(this);
       window.addEventListener(
         "mousemove",
+
+        // Escuchadores que reinician el contador a 0 al detectar actividad física
         this.boundResetearContadorInactividad,
       );
       window.addEventListener("keydown", this.boundResetearContadorInactividad);
       window.addEventListener("click", this.boundResetearContadorInactividad);
       window.addEventListener("scroll", this.boundResetearContadorInactividad);
     },
+
+    //############################# CIERRE ###########################################//
+
+
+    // ##################  MANEJA CUENTA REGRESIVA FINAL CUANDO EL MODAL DE INACTIVDAD ESTA VISIBLE ############## //
+    // Maneja la cuenta regresiva destructiva final cuando el modal de inactividad está visible //
 
     gatillarCuentaRegresivaCierre() {
       if (this.intervaloAlertaCierreId)
@@ -114,14 +142,22 @@ export const useAuthStore = defineStore("auth", {
       }, 1000);
     },
 
-    resetearContadorInactividad() {
+  //############################# CIERRE ###########################################//
+
+  // ####################### PONE segundosInactivo = 0 ##################### //
+
+  resetearContadorInactividad() {
       if (!this.mostrarModalInactividad) {
         this.segundosInactivo = 0;
       }
     },
-    // aca se implementa la logica para extender la sesion de la clinica, esto se hace cuando el usuario esta inactivo y
-    // se le muestra un modal, si el usuario hace click en extender sesion, se resetea el contador de inactividad y se cierra
-    // el modal
+ //############################# CIERRE ###########################################//
+
+
+//############################ ES LA ACCION DE RESCATE EJECUTADA CUANDO EL USUARIO PRESIONA EL BOTON  "EXTENDER SESION" EN LA INTERFAZ ######## //
+
+    // se le muestra un modal, si el usuario hace click en extender sesion, se resetea el contador de inactividad //
+  
     extenderSesionClinica() {
       // 1. Ocultamos los componentes visuales de alerta
       this.mostrarModalInactividad = false;
@@ -138,12 +174,16 @@ export const useAuthStore = defineStore("auth", {
       }
 
       // 4. SOLUCIÓN CRÍTICA: Validamos si el tiempo de sesión general está en zona de riesgo (30 segundos o menos).
-      // Si el usuario presiona "Extender" desde la alerta de expiración de tiempo, le devolvemos sus 3 minutos.
+      // Si el usuario presiona "Extender" desde la alerta de expiración de tiempo, le devolvemos sus 5 minutos.
       if (this.tiempoSegundos <= 30) {
         this.tiempoSegundos = 300;
         localStorage.setItem("tiempoSegundos", this.tiempoSegundos);
       }
     },
+ //############################# CIERRE ###########################################//
+
+
+ // ########################## CANCELA TODOS LOS setInterval ACTIVOS Y REMUEVE LOS ESCUCHADORES DE EVENTOS DEL WINDOWS #### //
 
     detenerRelojesSeguridad() {
       if (this.intervaloId) clearInterval(this.intervaloId);
@@ -175,8 +215,14 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    // aca se implementa la logica de reintentos para el login, con un maximo de 3 intentos
+     //############################# CIERRE ###########################################//
+
+    // ############## AUTENTICACION DEL USUARIO ENVIANDO UNA PETICION POST AL BACKEND /auth/login ############ //
+
+    // aca se implementa la logica de reintentos para el login, con un maximo de 3 intentos automaticos
     // esto quiere decir que si el backend no responde, se reintentara 3 veces antes de mostrar un error al usuario
+    // Si las credenciales son válidas, guarda el token y el usuario en el estado de Pinia y en localStorage, e inicia los temporizadores de seguridad.
+    // los tres intentos si el backend no responde son automaticos.
     async iniciarSesion(correo, password) {
       const maxReintentos = 3;
       let intentoActual = 0;
@@ -190,9 +236,17 @@ export const useAuthStore = defineStore("auth", {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ correo, password }),
           });
-
           datos = await respuesta.json();
+
+          if (respuesta.status === 429){
+            return{
+              exito: false,
+              error: datos.msg || "Demasiados intentos. Su IP ha sido bloqueada temporalmente".
+            }
+          }
+
           break; // Si la petición fue exitosa (con o sin error de credenciales), rompemos el bucle
+
         } catch (error) {
           intentoActual++;
           console.warn(
@@ -227,16 +281,23 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
+    // #################### CIERRE ################### //
+
+    // ############## REALIZA LA LIMPIEZA DEL ESTADO LOCAL ################# //
     cerrarSesion() {
       this.detenerRelojesSeguridad();
       this.token = null;
       this.usuario = null;
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
-      localStorage.removeItem("tiempoSegundos"); // 🔹 Limpieza absoluta
+      localStorage.removeItem("tiempoSegundos"); 
     },
+// #################### CIERRE ################### //
 
-    // REFACTORIZADO: Rutas dinámicas de SPA usando Vue Router sin destruir la UI en blanco
+
+
+// ######################## CIERRA LA SESION Y REDIRIGE AL USUARIO A LA VISTA DE / LOGIN MEDIANTE VUE ROUTER //
+
     ejecutarSalidaForzada(motivo = "expirado") {
       this.cerrarSesion();
 
@@ -252,6 +313,11 @@ export const useAuthStore = defineStore("auth", {
         router.push("/login?alerta=expirado");
       }
     },
+
+// #################### CIERRE ################### //
+
+
+// ############## FUNCIONA COMO UN INTERCEPTOR HTTP PARA REALIZAR PETICIONES PROTEGIDAS A LA API REST ########### //
 
     async fetchSeguro(endpointRelativo, opciones = {}) {
       const cabeceras = {
@@ -288,5 +354,10 @@ export const useAuthStore = defineStore("auth", {
         throw error;
       }
     },
+    
+// #################### CIERRE ################### //
+
+
+
   },
 });
