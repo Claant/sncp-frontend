@@ -23,7 +23,9 @@
             id="rut-buscar"
             type="text"
             v-model="rutBusqueda"
+            @input="formatearRutEnVivo"
             placeholder="Ej: 12.345.678-K"
+            maxlength="12"
             required
             :disabled="buscando"
           />
@@ -316,17 +318,12 @@
     
   </div>
 </template>
-
 <script setup>
-
-// views/Dashboard.vue (PARTE 1: IMPORTACIONES, VARIABLES REACTIVAS Y PAGINADORES)
-import { ref, reactive, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth.js";
 
-// Conexión directa mediante alias para evitar quiebres de rutas relativas
 import FormularioNuevaAtencion from "@/components/VistaDashboard/FormularioNuevaVista.vue";
-// Importación del componente de PDF
 import PdfServiceDashboard from "@/components/VistaDashboard/pdfServiceDashboard.vue";
 import BitacoraAuditoria from "@/components/VistaDashboard/BitacoraAuditoria.vue";
 
@@ -344,26 +341,25 @@ const formularioNuevaAtencionAbierto = ref(false);
 const mensajeError = ref(null);
 const componenteKey = ref(0);
 
-// CONTROL INTERACTIVO DE PASARELA: Variables nativas de origen y aduana manual
-const origenDatos = ref("none"); // Puede mutar a: 'local', 'externo', 'ninguno'
+// CONTROL INTERACTIVO DE PASARELA
+const origenDatos = ref("none"); // 'local', 'externo', 'ninguno'
 const pacienteIdExternoContingencia = ref(null);
 
-// Contenedores atómicos para el despliegue del expediente relacional NoSQL
+// Contenedores atómicos
 const paciente = ref(null);
 const historial = ref([]);
 const atencionSeleccionada = ref(null);
 const bitacoraAccesos = ref([]);
 const diagnosticos = ref([]);
 
-// CACHÉ PERIMETRAL: Almacena el recurso clínico FHIR recibido desde el clúster remoto
+// CACHÉ PERIMETRAL
 const fhirBundleExternoCache = ref(null);
 
-// Paginadores locales en la capa del navegador (Client-Side)
-
+// Paginadores locales
 const pagina = ref(1);
 const porPagina = 3;
 
-// Formateadores cronológicos adaptados a la zona horaria institucional chilena (es-CL)
+// Formateadores cronológicos
 const formatearFecha = (stringFecha) => {
   if (!stringFecha) return "N/A";
   return new Date(stringFecha).toLocaleDateString("es-CL", { timeZone: "UTC" });
@@ -374,16 +370,43 @@ const formatearFechaHora = (stringFecha) => {
   return new Date(stringFecha).toLocaleString("es-CL");
 };
 
-// Sanitizador de entrada: Fuerza el guion medio e impide el paso de caracteres basura
-const limpiarRutBuscador = (rutRaw) => {
-  if (!rutRaw) return "";
-  let limpio = rutRaw.replace(/[^0-9kK]/g, "").toUpperCase();
-  if (limpio.length < 2) return limpio;
-  return `${limpio.slice(0, -1)}-${limpio.slice(-1)}`;
+// ====================================================================
+// FUNCIONES Y MANEJO DE FORMATO DE RUT
+// ====================================================================
+
+// 1. Limpia cualquier carácter que no sea número o letra K
+const obtenerRutLimpio = (val) => {
+  if (!val) return '';
+  return val.replace(/[^0-9kK]/g, '').toUpperCase();
+};
+
+// 2. Transforma una cadena pura a formato chileno (XX.XXX.XXX-X)
+const aplicarFormatoRut = (val) => {
+  let limpio = obtenerRutLimpio(val);
+
+  if (limpio.length > 9) {
+    limpio = limpio.slice(0, 9);
+  }
+
+  if (limpio.length <= 1) return limpio;
+
+  const cuerpo = limpio.slice(0, -1);
+  const dv = limpio.slice(-1);
+  const cuerpoConPuntos = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+  return `${cuerpoConPuntos}-${dv}`;
+};
+
+// 3. Escuchador en vivo del evento @input para la interfaz HTML
+const formatearRutEnVivo = (e) => {
+  if (!e || !e.target) return;
+  const formateado = aplicarFormatoRut(e.target.value);
+  rutBusqueda.value = formateado;
+  e.target.value = formateado;
 };
 
 // ====================================================================
-// PROPIEDADES COMPUTADAS DE CONTROL: INTERFAZ REACTIVA DE REJILLAS
+// PROPIEDADES COMPUTADAS
 // ====================================================================
 const totalPaginas = computed(() => Math.ceil((historial.value?.length || 0) / porPagina) || 1);
 const historialPaginado = computed(() => {
@@ -392,7 +415,7 @@ const historialPaginado = computed(() => {
 });
 
 // ====================================================================
-// PARTE 2: MOTORES DE BÚSQUEDA ASÍNCRONOS Y TRADUCCIÓN INTERNA
+// MOTORES DE BÚSQUEDA Y LÓGICA DE NEGOCIO
 // ====================================================================
 let consultaEnCurso = false;
 
@@ -411,7 +434,6 @@ const evaluarCriterioBusqueda = async () => {
   }
 };
 
-// Sincroniza y discrimina orígenes de red
 const consultarSistemaNacional = async () => {
   buscando.value = true;
   mensajeError.value = null;
@@ -426,27 +448,26 @@ const consultarSistemaNacional = async () => {
   formularioNuevaAtencionAbierto.value = false;
 
   try {
-    const rutSanitizado = limpiarRutBuscador(rutBusqueda.value);
+    const rutSanitizado = aplicarFormatoRut(rutBusqueda.value);
     
-    // Consulta a la pasarela híbrida distribuida en Node.js (puerto 4001)
+    // Consulta a la pasarela híbrida
     const resBusqueda = await authStore.fetchSeguro(`/pacientes/${rutSanitizado}`);
     if (!resBusqueda) return;
     
     const datosPac = await resBusqueda.json();
     origenDatos.value = datosPac.origen || "none";
 
-    // Escenario A: El RUT no registra eventos médicos en ningún clúster clínico nacional
+    // Escenario A: No registrado
     if (!resBusqueda.ok || datosPac.origen === "ninguno") {
       origenDatos.value = "ninguno";
       throw new Error(datosPac.msg || "El RUT ingresado no está registrado en este centro de salud ni tampoco en otro recinto de salud externo");
     }
 
-    // Escenario B: Registro clínico LOCAL vigente (Desempaquetado y Renderizado Directo)
+    // Escenario B: Registro LOCAL
     if (datosPac.origen === "local") {
       const fhirBundle = datosPac.fhirBundle;
       if (fhirBundle && fhirBundle.entry) {
         
-        // 1. Extraer y estructurar recurso Patient para retrocompatibilidad demográfica
         const entradaPatient = fhirBundle.entry.find(e => e.resource?.resourceType === "Patient");
         if (entradaPatient) {
           paciente.value = {
@@ -457,7 +478,6 @@ const consultarSistemaNacional = async () => {
           };
         }
 
-        // 2. Extraer y estructurar recursos Encounter (Historial de consultas locales)
         historial.value = fhirBundle.entry
           .filter(e => e.resource?.resourceType === "Encounter")
           .map(e => ({
@@ -472,22 +492,18 @@ const consultarSistemaNacional = async () => {
 
       pagina.value = 1;
   
-      // Disparamos la bitácora legal vinculando el ID único extraído del recurso Patient
       if (paciente.value?._id) {
         await registrarAuditoriaForense(paciente.value._id, null);
       }
     }
     
-    // Escenario C: Registro clínico EXTERNO remoto (Bloqueo preventivo y Activación de Alerta)
+    // Escenario C: Registro EXTERNO
     else if (datosPac.origen === "externo") {
-      // Almacenamos el fhirBundle de forma íntegra en la caché local para el posterior commit
       fhirBundleExternoCache.value = datosPac.fhirBundle;
 
-      // Mapeamos el ID remoto del recurso Patient para la inyección transaccional
       const entradaPatientRemoto = datosPac.fhirBundle?.entry?.find(e => e.resource?.resourceType === "Patient");
       pacienteIdExternoContingencia.value = entradaPatientRemoto?.resource?.id || "contingencia-remota";
       
-      // RESTAURACIÓN DEL MENSAJE ORIGINAL QUE ENCIENDE EL BOTÓN MANUAL
       mensajeError.value = `El RUT ${rutSanitizado} no posee registros clínicos en este CESFAM.`;
     }
 
@@ -499,7 +515,7 @@ const consultarSistemaNacional = async () => {
     bitacoraAccesos.value = [];
     pacienteIdExternoContingencia.value = null;
     fhirBundleExternoCache.value = null;
-  } {
+  } finally {
     buscando.value = false;
   }
 };
@@ -509,11 +525,7 @@ const cerrarFichaClinica = () => {
   diagnosticos.value = [];
   bitacoraAccesos.value = [];
 };
-// ====================================================================
-// PARTE 3: SOPORTE CONTEXTUAL, IMPORTACIÓN TRANSACCIONAL Y LOGS LEY 20.584
-// ====================================================================
 
-// Carga contextual asíncrona cuando se interroga pasando el ID de la URL (Navbar de expedientes)
 const cargarFichaPorIdDirecto = async (pacienteId) => {
   buscando.value = true;
   mensajeError.value = null;
@@ -525,13 +537,12 @@ const cargarFichaPorIdDirecto = async (pacienteId) => {
     if (respuesta && respuesta.ok) {
       const datos = await respuesta.json();
       
-      // Sincronización en cascada de estructuras tradicionales de la base local
       historial.value = datos.atenciones || [];
       diagnosticos.value = datos.diagnosticos || [];
       bitacoraAccesos.value = datos.bitacora || [];
       paciente.value = datos.paciente;
       rutBusqueda.value = datos.paciente?.rut || "";
-      origenDatos.value = "local"; // Habilita reactivamente los v-if asistenciales del médico
+      origenDatos.value = "local";
       
       pagina.value = 1;
     
@@ -546,7 +557,6 @@ const cargarFichaPorIdDirecto = async (pacienteId) => {
   }
 };
 
-// Despliega reactivamente los diagnósticos CIE-10 (Condition) amarrados al Encounter seleccionado
 const toggleFichaClinica = async (atencion) => {
   if (atencionSeleccionada.value?._id === atencion._id) {
     cerrarFichaClinica();
@@ -575,17 +585,15 @@ const toggleFichaClinica = async (atencion) => {
   }
 };
 
-// PASARELA INTEROPERABLE RESTAURADA: Consume el fhirBundle de la caché y gatilla la inyección ACID
 const ejecutarImportacionFHIRDesdeDashboard = async () => {
   if (!fhirBundleExternoCache.value) return;
   buscando.value = true;
-  mensajeError.value = "🔄 Conectando con la base de datos externa sistema-informacion-clinica-demo... Sincronizando e integrando historial en base local con transacciones ACID...";
+  mensajeError.value = "🔄 Conectando con la base de datos externa... Sincronizando e integrando historial en base local con transacciones ACID...";
   
   try {
     let resImportar;
     let rutasAProbar = ["/expedientes/fhir/importar", "/expedientes/importar"];
     
-    // Ejecuta la inyección pasándole el fhirBundle limpio acumulado de la aduana
     for (let ruta of rutasAProbar) {
       resImportar = await authStore.fetchSeguro(ruta, {
         method: "POST",
@@ -606,7 +614,6 @@ const ejecutarImportacionFHIRDesdeDashboard = async () => {
       
       const idPacienteLocalNuevo = resultadoImportacion.paciente_id || resultadoImportacion.id || resultadoImportacion.expediente_id;
       
-      // Limpieza atómica de la caché asistencial perimetral
       rutBusqueda.value = "";
       pacienteIdExternoContingencia.value = null;
       fhirBundleExternoCache.value = null;
@@ -614,7 +621,7 @@ const ejecutarImportacionFHIRDesdeDashboard = async () => {
       
       if (idPacienteLocalNuevo && idPacienteLocalNuevo.length === 24) {
         setTimeout(() => {
-          componenteKey.value++; // Limpia el DOM y elimina residuos reactivos de memoria
+          componenteKey.value++;
           router.push(`/paciente/${idPacienteLocalNuevo}`);
         }, 50);
       } else {
@@ -632,8 +639,6 @@ const ejecutarImportacionFHIRDesdeDashboard = async () => {
   }
 };
 
-// Guardado tradicional de consultas para pacientes recurrentes (Validación de Zod en la API)
-// ✅ CÓDIGO REFACTORIZADO Y PERSONALIZADO
 const ejecutarGuardadoDesdeDashboard = async (payload) => {
   guardandoNuevaConsulta.value = true;
   try {
@@ -652,35 +657,32 @@ const ejecutarGuardadoDesdeDashboard = async (payload) => {
 
     if (respuesta.ok) {
       alert("✅ Evento clínico e informe patológico CIE-10 anexados con éxito.");
-      payload.resetForm(); // Le ordena al formulario hijo limpiar sus inputs locales
+      payload.resetForm();
       formularioNuevaAtencionAbierto.value = false;
       await consultarSistemaNacional();
     } else {
-      // 💡 CAPTURA INTELIGENTE DE ERRORES DETALLADOS DE ZOD:
       if (datos.detalles && Array.isArray(datos.detalles) && datos.detalles.length > 0) {
-        // Formateamos los errores validados por Zod en viñetas claras
         const listaErrores = datos.detalles.map(d => `• ${d.mensaje}`).join('\n');
-        alert(` No se pudo registrar la consulta médica:\n\n${listaErrores}`);
+        alert(`No se pudo registrar la consulta médica:\n\n${listaErrores}`);
       } else {
-        // Si es un error general no asociado a validación de formulario
         alert(`⚠️ ${datos.msg || "El clúster rechazó el registro."}`);
       }
     }
   } catch (error) {
     console.error("Error en guardado de atención médica:", error);
-    alert(` No se pudo conectar con el servidor: ${error.message}`);
+    alert(`No se pudo conectar con el servidor: ${error.message}`);
   } finally {
     guardandoNuevaConsulta.value = false;
   }
 };
 
 const redirigirAlRegistroExpress = () => {
-  const rutParaLlevar = limpiarRutBuscador(rutBusqueda.value);
+  const rutParaLlevar = aplicarFormatoRut(rutBusqueda.value);
   sessionStorage.setItem("rut_urgencia", rutParaLlevar);
   router.push("/nueva-ficha");
 };
 
-// GANCHOS DE MONTADO Y OBSERVADORES CRÍTICOS EN CALIENTE
+// GANCHOS DE MONTADO Y OBSERVADORES
 onMounted(() => {
   const idPacienteURL = route.params.pacienteId || route.params.id;
   if (idPacienteURL && idPacienteURL.length === 24) {
@@ -702,7 +704,6 @@ watch(
   { immediate: true },
 );
 
-// SERVICIO CENTRALIZADO DE AUDITORÍA FORENSE IDEMPOTENTE (OWASP / DEIS LEY 20.584)
 const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
   if (!pacienteId) return;
   try {
@@ -723,14 +724,11 @@ const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
   } catch (error) {
     console.error("⚠️ Fallo de comunicación en bus de auditoría:", error.message);
   } finally {
-    buscando.value = false; // Desactiva de forma segura el estado de carga
+    buscando.value = false;
   }
 };
-
 </script>
 
-
 <style scoped>
-/* Importación aislada y local del CSS exclusivo del Login */
 @import "../assets/css/dashboardStyles.css";
 </style>
