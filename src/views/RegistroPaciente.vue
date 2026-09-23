@@ -20,8 +20,8 @@
             <label>RUT Nacional</label>
             <input 
     type="text" 
-    :value="formulario.rut" 
-    @input="formatearRutEnVivo"
+    v-model="formulario.rut" 
+                @input="formatearRutEnVivo"
     placeholder="17.432.981-6" 
     maxlength="12"
   />
@@ -169,6 +169,7 @@ const formatearRutEnVivo = (e) => {
   formulario.rut = formateado;
   input.value = formateado;
 };
+
 
 onMounted(async () => {
   try {
