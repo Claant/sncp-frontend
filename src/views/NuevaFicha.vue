@@ -163,13 +163,13 @@ const formulario = reactive({
   codigo_enfermedad: '', descripcion: ''
 });
 
-// Helper interno para limpiar RUT (solo números y K)
+// Quita todo caracter no permitido y extrae la K en mayúscula
 const obtenerRutLimpio = (rutRaw) => {
   if (!rutRaw) return '';
   return rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
 };
 
-// Formateador dinámico de RUT chileno con puntos y guion (Ej: 17.432.981-6)
+// Formatea dinámicamente agregando puntos cada 3 dígitos y el guion antes del DV
 const alEscribirRut = (e) => {
   if (!e || !e.target) return;
   
@@ -178,6 +178,7 @@ const alEscribirRut = (e) => {
   if (limpio.length > 1) {
     const cuerpo = limpio.slice(0, -1);
     const dv = limpio.slice(-1);
+    // Agrega puntos de miles de derecha a izquierda
     const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     formulario.rut = `${cuerpoFormateado}-${dv}`;
   } else {
