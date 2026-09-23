@@ -65,10 +65,11 @@
       class="btn-importar-fhir"
       :disabled="buscando"
     >
-      {{ buscando ? "Procesando..." : "Importar Expediente FHIR" }}
+      {{ buscando ? "Procesando..." : "Importar Expediente" }}
     </button>
   </div>
 
+  <!-- Escenario A: Sin registros nacionales (Registro Expres / Nueva Ficha) -->
   <div v-if="origenDatos === 'ninguno'" class="mt-2 contenedor-alerta-accion">
     <p class="small text-secondary mb-2">
       El paciente no registra historial clínico en centros médicos de la red pública ni privada.
@@ -76,7 +77,7 @@
     <button
       type="button"
       @click="redirigirAlRegistroExpress"
-      class="btn-alerta"
+      class="btn-importar-fhir"
     >
       Registrar nueva ficha clínica
     </button>
@@ -130,7 +131,7 @@
       />
 
 
-      <!-- 🔹 HISTORIAL CLÍNICO CRONOLÓGICO PAGINADO -->
+      <!-- HISTORIAL CLÍNICO CRONOLÓGICO PAGINADO -->
       <article
         v-if="
           authStore.obtenerRol === 'medico' && !formularioNuevaAtencionAbierto
@@ -178,7 +179,7 @@
               </div>
             </div>
 
-            <!-- 🔹 ACCIONES DE LA ATENCIÓN: ACORDEÓN REACTIVO E IMPRESIÓN DEL DAU OFICIAL -->
+            <!-- ACCIONES DE LA ATENCIÓN: ACORDEÓN REACTIVO E IMPRESIÓN DEL DAU OFICIAL -->
             <div class="accion-atencion-lista" style="display: flex; gap: 10px; align-items: center;">
               <!-- Botón 1: Expande el acordeón visual para ver CIE-10 y Bitácora en Vue -->
               <button
