@@ -63,7 +63,7 @@
               <input 
                 type="text" 
                 v-model="formulario.rut" 
-                @input="formatearRutInput"
+                @input="formatearRutEnVivo"
                 placeholder="17.432.981-6" 
                 maxlength="12"
               />
@@ -140,6 +140,7 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
@@ -163,27 +164,41 @@ const formulario = reactive({
   codigo_enfermedad: '', descripcion: ''
 });
 
-// Quita todo caracter no permitido y extrae la K en mayúscula
+// Helper interno para limpiar el RUT (mantiene únicamente números y K)
 const obtenerRutLimpio = (rutRaw) => {
   if (!rutRaw) return '';
   return rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
 };
 
-// Formatea dinámicamente agregando puntos cada 3 dígitos y el guion antes del DV
-const alEscribirRut = (e) => {
+// Formateador inmediato con reajuste visual en tiempo real
+const formatearRutEnVivo = (e) => {
   if (!e || !e.target) return;
-  
-  let limpio = obtenerRutLimpio(e.target.value);
-  
+
+  const input = e.target;
+  let valor = input.value;
+
+  // 1. Obtener únicamente caracteres válidos en mayúsculas
+  let limpio = obtenerRutLimpio(valor);
+
+  // Limitar a un máximo de 9 caracteres limpios (cuerpo 8 + DV 1)
+  if (limpio.length > 9) {
+    limpio = limpio.slice(0, 9);
+  }
+
+  let formateado = limpio;
+
+  // 2. Aplicar formato inmediato según la cantidad de caracteres digitados
   if (limpio.length > 1) {
     const cuerpo = limpio.slice(0, -1);
     const dv = limpio.slice(-1);
+    
     // Agrega puntos de miles de derecha a izquierda
-    const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    formulario.rut = `${cuerpoFormateado}-${dv}`;
-  } else {
-    formulario.rut = limpio;
+    const cuerpoConPuntos = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    formateado = `${cuerpoConPuntos}-${dv}`;
   }
+
+  // 3. Asignar el valor formateado al estado del formulario
+  formulario.rut = formateado;
 };
 
 // Helper de notificaciones locales
