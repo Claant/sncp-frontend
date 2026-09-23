@@ -104,7 +104,7 @@
 }
 
 .btn-volver {
-  background-color: #64748b;
+  background-color: #64748b; /* Gris neutro para el retroceso */
   color: #ffffff;
   border: none;
   padding: 12px 26px;
@@ -113,7 +113,7 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  width: auto;
+  width: auto; /* Anula el 100% de la hoja base */
 }
 
 .btn-volver:hover:not(:disabled) {
@@ -121,7 +121,7 @@
 }
 
 .btn-siguiente {
-  background-color: #0284c7;
+  background-color: #0284c7; /* Azul corporativo idéntico a tu modelo */
   color: #ffffff;
   border: none;
   padding: 12px 30px;
@@ -130,7 +130,7 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  width: auto;
+  width: auto; /* Anula el 100% de la hoja base */
 }
 
 .btn-siguiente:hover:not(:disabled) {
@@ -159,98 +159,92 @@
 }
 
 /* ====================================================================
-   ESTILOS RECORREGIDOS PARA LA NOTIFICACIÓN FLOTANTE (TOAST)
+   ESTILOS PARA LA NOTIFICACIÓN FLOTANTE / SOBREPUESTA (TOAST)
    ==================================================================== */
 .notificacion-flotante {
-  position: fixed !important;
-  top: 90px !important;            /* Desplaza la alerta por debajo de la cabecera verde */
-  right: 25px !important;
-  z-index: 99999 !important;
-  width: 440px !important;         /* Fuerza un ancho suficiente en pantalla */
-  max-width: calc(100vw - 50px) !important;
-  padding: 16px 20px !important;
-  border-radius: 8px !important;
-  display: flex !important;
-  flex-direction: row !important;  /* Garantiza disposición horizontal */
-  align-items: flex-start !important;
-  justify-content: space-between !important;
-  gap: 16px !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.18), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-  backdrop-filter: blur(6px) !important;
-  box-sizing: border-box !important;
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999; /* Sobrepone la notificación por encima de cualquier otro elemento */
+  max-width: 450px;
+  width: calc(100% - 48px);
+  padding: 16px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4px);
 }
 
 /* Colores según el tipo de notificación */
 .notificacion-flotante.error {
-  background-color: #fef2f2 !important;
-  border-left: 5px solid #ef4444 !important;
-  color: #991b1b !important;
+  background-color: #fef2f2;
+  border-left: 5px solid #ef4444;
+  color: #991b1b;
 }
 
 .notificacion-flotante.exito {
-  background-color: #f0fdf4 !important;
-  border-left: 5px solid #22c55e !important;
-  color: #166534 !important;
+  background-color: #f0fdf4;
+  border-left: 5px solid #22c55e;
+  color: #166534;
 }
 
 .notificacion-contenido {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
+  flex: 1;
 }
 
 .notificacion-titulo {
-  margin: 0 !important;
-  font-weight: 700 !important;
-  font-size: 0.92rem !important;
-  line-height: 1.45 !important;
-  word-break: break-word !important;
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1.4;
 }
 
 .notificacion-detalles {
-  margin: 8px 0 0 0 !important;
-  padding-left: 0 !important;
-  list-style: none !important;
+  margin: 8px 0 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 .notificacion-detalles li {
-  font-size: 0.88rem !important;
-  margin-top: 4px !important;
-  line-height: 1.35 !important;
-  color: #b91c1c !important;
-  font-weight: 600 !important;
+  font-size: 0.88rem;
+  margin-top: 4px;
+  line-height: 1.35;
+  color: #b91c1c;
 }
 
 /* Botón '✕' para cerrar manualmente la alerta */
 .btn-cerrar-notificacion {
-  background: transparent !important;
-  border: none !important;
-  font-size: 1.2rem !important;
-  font-weight: bold !important;
-  color: #991b1b !important;
-  cursor: pointer !important;
-  padding: 0 4px !important;
-  line-height: 1 !important;
-  opacity: 0.6 !important;
-  transition: opacity 0.2s !important;
-  flex-shrink: 0 !important;     /* Evita que el botón '✕' se aplaste con textos largos */
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #991b1b;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.2s;
 }
 
 .btn-cerrar-notificacion:hover {
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 /* Animación de entrada y salida suave */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .fade-slide-enter-from {
-  opacity: 0 !important;
-  transform: translateY(-20px) scale(0.95) !important;
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
 }
 
 .fade-slide-leave-to {
-  opacity: 0 !important;
-  transform: translateX(30px) scale(0.95) !important;
+  opacity: 0;
+  transform: translateX(30px) scale(0.95);
 }
