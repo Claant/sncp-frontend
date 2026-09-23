@@ -118,7 +118,7 @@
 }
 
 /* ====================================================================
-   📦 views/Dashboard.vue (PARTE 1: HISTORIAL CRONOLÓGICO Y VISOR)
+   views/Dashboard.vue (PARTE 1: HISTORIAL CRONOLÓGICO Y VISOR)
    ==================================================================== */
 
 .seccion-historial-lista h3 {
@@ -310,7 +310,7 @@
   flex-direction: column;
 }
 
-/* 🚀 CLÁUSULA GEOMÉTRICA: Distribuye la información en dos columnas fijas y rectas */
+/* CLÁUSULA GEOMÉTRICA: Distribuye la información en dos columnas fijas y rectas */
 .fila-diagnostico-premium {
   display: grid;
   grid-template-columns: 240px 1fr; /* Columna de etiquetas alineada milimétricamente */
@@ -371,7 +371,7 @@
   gap: 8px; 
 }
 
-/* 🚀 RECALIBRADO: Grid balanceado dándole más peso a la columna de la fecha (2fr) */
+/* RECALIBRADO: Grid balanceado dándole más peso a la columna de la fecha (2fr) */
 .item-log-auditoria {
   background: #f8fafc;
   padding: 12px 16px; 
@@ -421,7 +421,7 @@
   text-align: center;
 }
 
-/* 🚀 CORRECCIÓN CRÍTICA: Bloquea el salto de línea del p.m. */
+/* CORRECCIÓN CRÍTICA: Bloquea el salto de línea del p.m. */
 .fecha-log-auditado { 
   color: #64748b; 
   font-size: 0.82rem; 
@@ -616,3 +616,56 @@
   color: #0d9488 !important;
 }
 
+/* ====================================================================
+   ESTILOS MEJORADOS PARA ALERTAS DE IMPORTACIÓN Y TEXTOS DESTACADOS
+   ==================================================================== */
+
+/* Texto principal de la alerta más nítido */
+.texto-alerta-principal {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+/* Texto sobre el botón de importación destacado */
+.texto-deteccion-destacado {
+  font-size: 0.92rem;
+  color: #0f766e; /* Color turquesa/verde médico profesional */
+  background-color: #ccfbf1; /* Fondo suave destacado */
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 3px solid #0d9488;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.texto-deteccion-destacado strong {
+  color: #115e59;
+}
+
+/* Botón de Importar acortado con el mismo color turquesa de "Consultar Ficha" */
+.btn-importar-fhir {
+  background-color: #0d9488; /* Mismo turquesa institucional que .btn-buscar */
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  width: auto; /* Ancho compacto ajustado al texto */
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);
+}
+
+.btn-importar-fhir:hover:not(:disabled) {
+  background-color: #0f766e;
+  transform: translateY(-1px);
+}
+
+.btn-importar-fhir:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+}

@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard-contenedor animate-fade">
 
-    <!-- 🔹 ENCABEZADO PRINCIPAL DEL DASHBOARD -->
+    <!-- ENCABEZADO PRINCIPAL DEL DASHBOARD -->
     <header class="dashboard-header">
       <h2>Consulta de ficha clínica por RUT</h2>
       <p>
@@ -48,36 +48,40 @@
 
 
 
-    <!-- MENSAJES DE ERROR Y OPCIONES DE IMPORTACIÓN/REGISTRO -->
-    <div v-if="mensajeError" class="alerta-clinica">
-      <p>{{ mensajeError }}</p>
-      <div v-if="origenDatos === 'externo'" class="mt-2">
-        <p class="small text-secondary mb-2">
-          Se detectó un expediente clínico en el Cesfam Las Compañias, ciudad de la Serena.
-        </p>
-        <button
-          type="button"
-          @click="ejecutarImportacionFHIRDesdeDashboard"
-          class="btn-alerta"
-          :disabled="buscando"
-        >
-          {{ buscando ? "Procesando..." : "Importar expediente HL7 FHIR" }}
-        </button>
-      </div>
-      <div v-if="origenDatos === 'ninguno'" class="mt-2">
-        <p class="small text-secondary mb-2">
-          El paciente no registra historial clínico en centros médicos de la red pública ni privada
-        </p>
-        <button
-          type="button"
-          @click="redirigirAlRegistroExpress"
-          class="btn-alerta"
-        >
-          Registrar nueva ficha clínica
-        </button>
-      </div>
-    </div>
+   <!-- MENSAJES DE ERROR Y OPCIONES DE IMPORTACIÓN/REGISTRO -->
+<div v-if="mensajeError" class="alerta-clinica">
+  <p class="texto-alerta-principal">{{ mensajeError }}</p>
+  
+  <div v-if="origenDatos === 'externo'" class="mt-2 contenedor-alerta-accion">
+    <!-- Texto informativo más destacado -->
+    <p class="texto-deteccion-destacado">
+      📍 Se detectó un expediente clínico remoto en el <strong>CESFAM Las Compañías (La Serena)</strong>.
+    </p>
+    
+    <!-- Botón con dimensiones compactas y color institucional -->
+    <button
+      type="button"
+      @click="ejecutarImportacionFHIRDesdeDashboard"
+      class="btn-importar-fhir"
+      :disabled="buscando"
+    >
+      {{ buscando ? "Procesando..." : "Importar Expediente FHIR" }}
+    </button>
+  </div>
 
+  <div v-if="origenDatos === 'ninguno'" class="mt-2 contenedor-alerta-accion">
+    <p class="small text-secondary mb-2">
+      El paciente no registra historial clínico en centros médicos de la red pública ni privada.
+    </p>
+    <button
+      type="button"
+      @click="redirigirAlRegistroExpress"
+      class="btn-alerta"
+    >
+      Registrar nueva ficha clínica
+    </button>
+  </div>
+</div>
 
     <!-- RESULTADOS INTEGRADOS ESTILO LISTA COMPACTA FICHA PACIENTE-->
     <div v-if="paciente" class="resultado-clinico animate-fade">
@@ -308,8 +312,6 @@
         clínico acreditado.
       </div>
     </div>
-
-
     
   </div>
 </template>
@@ -725,7 +727,6 @@ const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
 };
 
 </script>
-
 
 
 <style scoped>
