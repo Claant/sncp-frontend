@@ -34,19 +34,19 @@
           <div class="grilla-campos">
             <div class="campo">
               <label>Calle</label>
-              <input type="text" v-model="formulario.calle" autocomplete="formulario.calle" placeholder="Ej: Av. Providencia" />
+              <input type="text" v-model="formulario.calle" placeholder="Ej: Av. Providencia" />
             </div>
             <div class="campo">
               <label>Número</label>
-              <input type="text" v-model="formulario.numero" autocomplete="formulario.numero" placeholder="Ej: 1450" />
+              <input type="text" v-model="formulario.numero" placeholder="Ej: 1450" />
             </div>
             <div class="campo">
               <label>Comuna</label>
-              <input type="text" v-model="formulario.comuna" autocomplete="formulario.comuna" placeholder="Ej: Providencia" />
+              <input type="text" v-model="formulario.comuna" placeholder="Ej: Providencia" />
             </div>
             <div class="campo">
               <label>Ciudad</label>
-              <input type="text" v-model="formulario.ciudad" autocomplete="formulario.ciudad" placeholder="Ej: Santiago" />
+              <input type="text" v-model="formulario.ciudad" placeholder="Ej: Santiago" />
             </div>
           </div>
         </div>
@@ -60,7 +60,13 @@
           <div class="grilla-campos">
             <div class="campo">
               <label>RUT Nacional</label>
-              <input type="text" v-model="form.rut" placeholder="17.432.981-6" max/>
+              <input 
+                type="text" 
+                v-model="formulario.rut" 
+                @input="formatearRutInput"
+                placeholder="17.432.981-6" 
+                maxlength="12"
+              />
             </div>
             <div class="campo">
               <label>Nombre Completo</label>
@@ -139,20 +145,6 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
 
-const form = reactive({
-  calle: '',
-  numero: '',
-  comuna: '',
-  ciudad: '',
-  rut: '', // <-- ASEGÚRATE DE QUE 'rut' ESTÉ DECLARADO AQUÍ
-  nombre: '',
-  fecha_nacimiento: '',
-  centro_salud_id: '',
-  motivo_consulta: '',
-  codigo_enfermedad: '',
-  descripcion: ''
-});
-
 const authStore = useAuthStore();
 
 // Estados reactivos de control visual y carga
@@ -160,11 +152,11 @@ const pasoActual = ref(1);
 const centrosSalud = ref([]);
 const procesando = ref(false);
 
-// Objeto de notificación enriquecido (admite título y detalles de Zod)
+// Objeto de notificación
 const notificacion = reactive({ texto: '', tipo: '', detalles: [] });
 let timeoutAlerta = null;
 
-// Estructura de variables reactivas mapeada al req.body del Backend
+// Estructura ÚNICA reactiva de formulario
 const formulario = reactive({
   calle: '', numero: '', comuna: '', ciudad: '',
   rut: '', nombre: '', fecha_nacimiento: '', centro_salud_id: '',
@@ -172,14 +164,29 @@ const formulario = reactive({
   codigo_enfermedad: '', descripcion: ''
 });
 
-// Helper de notificaciones locales adaptado a arreglos de error
+// Formateador dinámico de RUT chileno en pantalla (Ej: 12.345.678-K)
+const formatearRutInput = (e) => {
+  if (!e || !e.target) return;
+  
+  let valor = e.target.value.replace(/[^0-9kK]/g, '').toUpperCase();
+  
+  if (valor.length > 1) {
+    const cuerpo = valor.slice(0, -1);
+    const dv = valor.slice(-1);
+    const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    valor = `${cuerpoFormateado}-${dv}`;
+  }
+  
+  formulario.rut = valor;
+};
+
+// Helper de notificaciones locales
 const lanzarAlertaLocal = (texto, tipo, detalles = []) => {
   if (timeoutAlerta) clearTimeout(timeoutAlerta);
   notificacion.texto = texto;
   notificacion.tipo = tipo;
   notificacion.detalles = detalles;
   
-  // Si hay detalles múltiples, extendemos el tiempo a 7 segundos para facilitar la lectura
   const duracion = detalles.length > 0 ? 7000 : 4000;
 
   timeoutAlerta = setTimeout(() => {
@@ -197,15 +204,6 @@ const limpiarAlerta = () => {
 const obtenerNombrePaso = (step) => {
   const nombres = { 1: '1. Dirección', 2: '2. Datos Personales', 3: '3. Motivo', 4: '4. Diagnóstico' };
   return nombres[step];
-};
-
-const limpiarRutFicha = (rutRaw) => {
-  if (!rutRaw) return '';
-  let limpio = rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
-  if (limpio.length < 2) return limpio;
-  const cuerpo = limpio.slice(0, -1);
-  const dv = limpio.slice(-1);
-  return `${cuerpo}-${dv}`; 
 };
 
 onMounted(async () => {
@@ -259,7 +257,7 @@ const evaluarPasoSiguiente = () => {
   }
 };
 
-// Envío a la API utilizando ventanas emergentes alert() idénticas a Dashboard.vue
+// Envío a la API utilizando ventanas emergentes alert()
 const enviarExpedienteConsolidado = async () => {
   procesando.value = true;
 
@@ -268,7 +266,7 @@ const enviarExpedienteConsolidado = async () => {
     numero: formulario.numero.trim(),
     comuna: formulario.comuna.trim(),
     ciudad: formulario.ciudad.trim(),
-    rut: limpiarRutFicha(formulario.rut),
+    rut: formulario.rut.trim(),
     nombre: formulario.nombre.trim(),
     fecha_nacimiento: formulario.fecha_nacimiento,
     centro_salud_id: formulario.centro_salud_id,
@@ -293,9 +291,7 @@ const enviarExpedienteConsolidado = async () => {
     const datos = await respuesta.json();
 
     if (!respuesta.ok) {
-      // 💡 CAPTURA E IMPRESIÓN DE ERRORES CON ALERT NATIVO (Formato Dashboard)
       if (datos.detalles && Array.isArray(datos.detalles) && datos.detalles.length > 0) {
-        // Mapeamos los errores devueltos por Zod en viñetas formateadas
         const listaErrores = datos.detalles.map(d => `• ${d.mensaje || d}`).join('\n');
         alert(`No se pudo registrar la ficha clínica:\n\n${listaErrores}`);
       } else {
@@ -304,10 +300,9 @@ const enviarExpedienteConsolidado = async () => {
       return;
     }
 
-    // Ventana emergente de éxito
     alert(`✅ ${datos.msg || 'Ficha clínica registrada con éxito.'}`);
 
-    // Limpieza de campos y retorno al Paso 1
+    // Limpieza de campos
     Object.assign(formulario, {
       calle: '', numero: '', comuna: '', ciudad: '',
       rut: '', nombre: '', fecha_nacimiento: '', centro_salud_id: '',
@@ -324,32 +319,8 @@ const enviarExpedienteConsolidado = async () => {
     procesando.value = false;
   }
 };
-
-// En tu componente Vue 3 (NuevaFicha.vue)
-const formatearRutInput = (e) => {
-  if (!e || !e.target) return;
-  
-  let valor = e.target.value.replace(/[^0-9kK]/g, '').toUpperCase();
-  
-  if (valor.length > 1) {
-    const cuerpo = valor.slice(0, -1);
-    const dv = valor.slice(-1);
-    const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    valor = `${cuerpoFormateado}-${dv}`;
-  }
-  
-  // Aseguramos asignación reactiva
-  form.rut = valor;
-};
-
-
-
-
-
 </script>
 
 <style scoped>
 @import "../assets/css/nuevaFichaStyles.css";
-
-
 </style>
