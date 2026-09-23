@@ -20,7 +20,8 @@
             <label>RUT Nacional</label>
             <input
               type="text"
-              v-model="rutFormateado"
+              v-model="paciente.rut"
+              @blur="paciente.rut = formatearRutChile(paciente.rut)"
               placeholder="Ej: 17.432.981-6" 
               required 
               :disabled="guardando" 
