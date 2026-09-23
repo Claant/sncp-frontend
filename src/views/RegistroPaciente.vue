@@ -18,14 +18,17 @@
         <div class="grilla-formulario">
           <div class="campo-entrada">
             <label>RUT Nacional</label>
+            <!-- CORREGIDO: Usar paciente.rut en lugar de formulario.rut -->
             <input 
-    type="text" 
-    v-model="formulario.rut" 
-                @input="formatearRutEnVivo"
-    placeholder="17.432.981-6" 
-    maxlength="12"
-  />
-</div>
+              type="text" 
+              v-model="paciente.rut" 
+              @input="formatearRutEnVivo"
+              placeholder="17.432.981-6" 
+              maxlength="12"
+              required
+              :disabled="guardando"
+            />
+          </div>
           <div class="campo-entrada">
             <label>Nombre Completo</label>
             <input type="text" v-model="paciente.nombre" placeholder="Juan Carlos Pérez" required :disabled="guardando" />
@@ -96,8 +99,7 @@
 </template>
 
 <script setup>
-// 1. CORRECCIÓN CRÍTICA: Se añade 'computed' a la importación de Vue
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
 
 const authStore = useAuthStore();
@@ -135,6 +137,7 @@ const lanzarAlertaLocal = (texto, tipo) => {
     notificacion.tipo = '';
   }, 4000);
 };
+
 // Helper interno para limpiar el RUT (mantiene únicamente números y K)
 const obtenerRutLimpio = (rutRaw) => {
   if (!rutRaw) return '';
@@ -148,14 +151,14 @@ const formatearRutEnVivo = (e) => {
   const input = e.target;
   let limpio = obtenerRutLimpio(input.value);
 
-  // Limitar a un máximo de 9 caracteres limpios (cuerpo 8 + DV 1)
+  // Limitar a un máximo de 9 caracteres limpios (cuerpo max 8 + DV 1)
   if (limpio.length > 9) {
     limpio = limpio.slice(0, 9);
   }
 
   let formateado = limpio;
 
-  // Aplicar formato dinámico
+  // Aplicar formato dinámico solo si hay más de 1 carácter
   if (limpio.length > 1) {
     const cuerpo = limpio.slice(0, -1);
     const dv = limpio.slice(-1);
@@ -165,11 +168,10 @@ const formatearRutEnVivo = (e) => {
     formateado = `${cuerpoConPuntos}-${dv}`;
   }
 
-  // Asignamos tanto la variable reactiva como el valor directo del elemento del DOM
-  formulario.rut = formateado;
+  // CORREGIDO: Asignación al objeto reactivo correcto 'paciente.rut'
+  paciente.rut = formateado;
   input.value = formateado;
 };
-
 
 onMounted(async () => {
   try {
@@ -216,7 +218,7 @@ const procesarRegistroPaciente = async () => {
     }
 
     const payloadFinal = {
-      rut: paciente.rut.trim(),
+      rut: paciente.rut.trim(), // Envía el RUT con formato (o usa obtenerRutLimpio(paciente.rut) si tu Backend exige el RUT sin puntos)
       nombre: paciente.nombre.trim(),
       fecha_nacimiento: paciente.fecha_nacimiento,
       centro_salud_id: paciente.centro_salud_id,
