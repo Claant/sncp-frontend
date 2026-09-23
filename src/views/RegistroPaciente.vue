@@ -138,24 +138,27 @@ const lanzarAlertaLocal = (texto, tipo) => {
   }, 4000); // 4 segundos en pantalla y se desvanece solo
 };
 
-// FUNCIÓN DE SANITIZACIÓN Y FORMATO VISUAL DEL RUT: Fuerza el formato XX.XXX.XXX-X
+// FUNCIÓN DE SANITIZACIÓN Y FORMATO VISUAL DEL RUT EN TIEMPO REAL
 const limpiarRutInscripcion = (rutRaw) => {
   if (!rutRaw) return '';
   
-  // 1. Limpia cualquier carácter que no sea número o K/k y lo pasa a mayúsculas
+  // 1. Limpia cualquier carácter que no sea número o K/k
   let limpio = rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
-  if (limpio.length < 2) return limpio;
+  if (limpio.length === 0) return '';
+  if (limpio.length === 1) return limpio;
 
   // 2. Separa el cuerpo del dígito verificador
   const cuerpo = limpio.slice(0, -1);
   const dv = limpio.slice(-1);
 
-  // 3. Aplica los puntos al cuerpo numérico (agrupa en miles)
+  // 3. Formatea el cuerpo con puntos de miles
   const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
-  // 4. Retorna el RUT estandarizado de forma estricta: XX.XXX.XXX-X
+  // 4. Retorna el RUT formateado: XX.XXX.XXX-X
   return `${cuerpoFormateado}-${dv}`;
 };
+
+
 
 // Consumo nativo mediante Fetch al inicializar para rellenar los establecimientos
 onMounted(async () => {
