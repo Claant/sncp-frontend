@@ -20,8 +20,7 @@
             <label>RUT Nacional</label>
             <input
               type="text"
-              v-model="paciente.rut"
-              @input="paciente.rut = limpiarRutInscripcion(paciente.rut)" 
+              v-model="rutFormateado"
               placeholder="Ej: 17.432.981-6" 
               required 
               :disabled="guardando" 
@@ -136,25 +135,34 @@ const lanzarAlertaLocal = (texto, tipo) => {
   }, 4000);
 };
 
-// FUNCIÓN DE SANITIZACIÓN Y FORMATO VISUAL DEL RUT EN TIEMPO REAL (XX.XXX.XXX-X)
-const limpiarRutInscripcion = (rutRaw) => {
+// FUNCIÓN DE FORMATO: Convierte "174329816" en "17.432.981-6"
+const aplicarFormatoRut = (rutRaw) => {
   if (!rutRaw) return '';
   
-  // 1. Filtra cualquier carácter que no sea número o K/k
+  // Limpia cualquier carácter que no sea número o K/k
   let limpio = rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
   if (limpio.length === 0) return '';
   if (limpio.length === 1) return limpio;
 
-  // 2. Separa el cuerpo numérico del dígito verificador
+  // Separa el cuerpo numérico del dígito verificador
   const cuerpo = limpio.slice(0, -1);
   const dv = limpio.slice(-1);
 
-  // 3. Formatea el cuerpo con puntos de miles
+  // Formatea el cuerpo con puntos de miles
   const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
-  // 4. Retorna la estructura estandarizada
   return `${cuerpoFormateado}-${dv}`;
 };
+
+// COMPUTED PROPERTY: Intercepta la escritura y actualiza paciente.rut con puntos y guion
+const rutFormateado = computed({
+  get() {
+    return aplicarFormatoRut(paciente.rut);
+  },
+  set(nuevoValor) {
+    paciente.rut = aplicarFormatoRut(nuevoValor);
+  }
+});
 
 onMounted(async () => {
   try {
