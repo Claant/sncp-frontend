@@ -157,23 +157,29 @@
     transform: translateY(0); 
   }
 }
-
 /* ====================================================================
-   ESTILOS PARA LA NOTIFICACIÓN FLOTANTE / SOBREPUESTA (TOAST)
+   ESTILOS PARA LA NOTIFICACIÓN FLOTANTE / SOBREPUESTA (TOAST CORREGIDO)
    ==================================================================== */
 .notificacion-flotante {
   position: fixed;
-  top: 24px;
+  top: 90px; /* Bautizado debajo del Navbar para no tapar la sesión ni el header */
   right: 24px;
-  z-index: 9999; /* Sobrepone la notificación por encima de cualquier otro elemento */
-  max-width: 450px;
-  width: calc(100% - 48px);
+  z-index: 9999;
+  
+  /* Ancho responsivo pero estable */
+  width: auto;
+  min-width: 320px;
+  max-width: 420px;
+  
   padding: 16px 20px;
   border-radius: 8px;
+  box-sizing: border-box;
+
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
+  
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(4px);
 }
@@ -192,7 +198,8 @@
 }
 
 .notificacion-contenido {
-  flex: 1;
+  flex: 1; /* Ocupa todo el espacio disponible antes del botón cerrar */
+  min-width: 0; /* Previene colapso en contenedores flex */
 }
 
 .notificacion-titulo {
@@ -200,11 +207,14 @@
   font-weight: 700;
   font-size: 0.92rem;
   line-height: 1.4;
+  text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .notificacion-detalles {
   margin: 8px 0 0 0;
-  padding: 0;
+  padding: 0 0 0 12px;
   list-style: none;
 }
 
@@ -219,14 +229,16 @@
 .btn-cerrar-notificacion {
   background: transparent;
   border: none;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  color: #991b1b;
+  color: inherit;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 0;
+  margin: -2px 0 0 0;
   line-height: 1;
-  opacity: 0.7;
-  transition: opacity 0.2s;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0; /* Evita que el botón X se deforme si el texto es largo */
 }
 
 .btn-cerrar-notificacion:hover {
@@ -241,10 +253,10 @@
 
 .fade-slide-enter-from {
   opacity: 0;
-  transform: translateY(-20px) scale(0.95);
+  transform: translateY(-15px) scale(0.98);
 }
 
 .fade-slide-leave-to {
   opacity: 0;
-  transform: translateX(30px) scale(0.95);
+  transform: translateX(20px) scale(0.98);
 }
