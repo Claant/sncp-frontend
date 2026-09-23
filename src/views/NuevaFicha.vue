@@ -175,10 +175,7 @@ const formatearRutEnVivo = (e) => {
   if (!e || !e.target) return;
 
   const input = e.target;
-  let valor = input.value;
-
-  // 1. Obtener únicamente caracteres válidos en mayúsculas
-  let limpio = obtenerRutLimpio(valor);
+  let limpio = obtenerRutLimpio(input.value);
 
   // Limitar a un máximo de 9 caracteres limpios (cuerpo 8 + DV 1)
   if (limpio.length > 9) {
@@ -187,7 +184,7 @@ const formatearRutEnVivo = (e) => {
 
   let formateado = limpio;
 
-  // 2. Aplicar formato inmediato según la cantidad de caracteres digitados
+  // Aplicar formato dinámico
   if (limpio.length > 1) {
     const cuerpo = limpio.slice(0, -1);
     const dv = limpio.slice(-1);
@@ -197,8 +194,9 @@ const formatearRutEnVivo = (e) => {
     formateado = `${cuerpoConPuntos}-${dv}`;
   }
 
-  // 3. Asignar el valor formateado al estado del formulario
+  // Asignamos tanto la variable reactiva como el valor directo del elemento del DOM
   formulario.rut = formateado;
+  input.value = formateado;
 };
 
 // Helper de notificaciones locales
