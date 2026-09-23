@@ -204,88 +204,90 @@ const volverPaso = () => {
   }
 };
 
-// Validador perimetral de campos requeridos antes de avanzar en el Stepper
+// Validaciones locales rápidas de campos no vacíos para permitir navegar entre los pasos
 const evaluarPasoSiguiente = () => {
   notificacion.texto = '';
 
   if (pasoActual.value === 1) {
     if (!formulario.calle.trim() || !formulario.numero.trim() || !formulario.comuna.trim() || !formulario.ciudad.trim()) {
-      lanzarAlertaLocal('Por favor, complete todos los campos de su residencia del Paso 1.', 'error');
+      lanzarAlertaLocal('Por favor, complete todos los campos de residencia del Paso 1.', 'error');
       return;
     }
     pasoActual.value = 2;
   } 
-  
   else if (pasoActual.value === 2) {
     if (!formulario.rut.trim() || !formulario.nombre.trim() || !formulario.fecha_nacimiento || !formulario.centro_salud_id) {
-      lanzarAlertaLocal('Por favor, complete todos los antecedentes de identidad del Paso 2.', 'error');
+      lanzarAlertaLocal('Por favor, complete todos los datos personales del Paso 2.', 'error');
       return;
     }
     pasoActual.value = 3;
   } 
-  
   else if (pasoActual.value === 3) {
     if (!formulario.motivo_consulta.trim()) {
-      lanzarAlertaLocal('Por favor, ingrese la sintomatología o motivo de la consulta en el Paso 3.', 'error');
+      lanzarAlertaLocal('Por favor, ingrese el motivo de consulta en el Paso 3.', 'error');
       return;
     }
     pasoActual.value = 4;
   } 
-  
   else if (pasoActual.value === 4) {
     if (!formulario.codigo_enfermedad.trim() || !formulario.descripcion.trim()) {
-      lanzarAlertaLocal('Por favor, complete el código CIE-10 y la descripción del alta en el Paso 4.', 'error');
+      lanzarAlertaLocal('Por favor, complete el código CIE-10 y la descripción en el Paso 4.', 'error');
       return;
     }
     enviarExpedienteConsolidado();
   }
 };
 
-// Despacho del expediente compuesto hacia el endpoint unificado /atenciones/completa
+// Envío a la API y procesamiento de respuestas del middleware de Zod
 const enviarExpedienteConsolidado = async () => {
   procesando.value = true;
   notificacion.texto = '';
 
-  // 1. Clonamos el formulario local para manipular el payload de forma segura sin romper la reactividad
   const datosEnvio = {
     calle: formulario.calle.trim(),
     numero: formulario.numero.trim(),
     comuna: formulario.comuna.trim(),
     ciudad: formulario.ciudad.trim(),
-    rut: limpiarRutFicha(formulario.rut), // Fuerza el formato estricto con guion intermedio
+    rut: limpiarRutFicha(formulario.rut),
     nombre: formulario.nombre.trim(),
     fecha_nacimiento: formulario.fecha_nacimiento,
     centro_salud_id: formulario.centro_salud_id,
     motivo_consulta: formulario.motivo_consulta.trim(),
-    codigo_enfermedad: formulario.codigo_enfermedad.trim().toUpperCase(), // Normalizado a CIE-10 exacto
+    codigo_enfermedad: formulario.codigo_enfermedad.trim().toUpperCase(),
     descripcion: formulario.descripcion.trim()
   };
 
-  // 2. Si hay fecha opcional, la limpiamos, de lo contrario la omitimos para usar el default de Atlas
   if (formulario.fecha) {
     datosEnvio.fecha = formulario.fecha;
   }
 
   try {
-    // 3. Petición POST despachada a través de tu cliente seguro de Pinia
     const respuesta = await authStore.fetchSeguro('/atenciones/completa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(datosEnvio)
     });
 
-    if (!respuesta) return; // Detención controlada si el token expiró (401/403)
+    if (!respuesta) return;
 
     const datos = await respuesta.json();
 
     if (!respuesta.ok) {
-      throw new Error(datos.msg || 'Error transaccional al procesar el expediente integrado.');
+      // Captura de los errores mapeados en validatorMiddleware.js
+      if (datos.detalles && Array.isArray(datos.detalles) && datos.detalles.length > 0) {
+        // Tomamos el mensaje explícito del primer objeto dentro del arreglo 'detalles'
+        const primerErrorZod = datos.detalles[0].mensaje;
+        lanzarAlertaLocal(primerErrorZod, 'error');
+      } else {
+        lanzarAlertaLocal(datos.msg || 'Ocurrió un error al procesar el registro.', 'error');
+      }
+      return;
     }
 
-    // 4. RESPUESTA DE ÉXITO GOVERNADA POR TU CONTROLADOR RESILIENTE
-    lanzarAlertaLocal(datos.msg || 'Expediente compuesto registrado con éxito.', 'exito');
+    // Respuesta exitosa del backend
+    lanzarAlertaLocal(datos.msg || 'Ficha clínica registrada con éxito.', 'exito');
 
-    // 5. Limpieza atómica y reactiva de los campos locales mediante reasignación masiva segura
+    // Limpieza atómica del formulario
     Object.assign(formulario, {
       calle: '', numero: '', comuna: '', ciudad: '',
       rut: '', nombre: '', fecha_nacimiento: '', centro_salud_id: '',
@@ -293,7 +295,6 @@ const enviarExpedienteConsolidado = async () => {
       codigo_enfermedad: '', descripcion: ''
     });
 
-    // Devolvemos el asistente visual al Paso 1 de forma limpia
     pasoActual.value = 1;
 
   } catch (error) {
