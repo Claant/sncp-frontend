@@ -139,6 +139,20 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
 
+const form = reactive({
+  calle: '',
+  numero: '',
+  comuna: '',
+  ciudad: '',
+  rut: '', // <-- ASEGÚRATE DE QUE 'rut' ESTÉ DECLARADO AQUÍ
+  nombre: '',
+  fecha_nacimiento: '',
+  centro_salud_id: '',
+  motivo_consulta: '',
+  codigo_enfermedad: '',
+  descripcion: ''
+});
+
 const authStore = useAuthStore();
 
 // Estados reactivos de control visual y carga
@@ -312,20 +326,19 @@ const enviarExpedienteConsolidado = async () => {
 };
 
 // En tu componente Vue 3 (NuevaFicha.vue)
-
-const formatearRutInput = (event) => {
-  let valor = event.target.value.replace(/[^0-9kK]/g, '').toUpperCase();
+const formatearRutInput = (e) => {
+  if (!e || !e.target) return;
+  
+  let valor = e.target.value.replace(/[^0-9kK]/g, '').toUpperCase();
   
   if (valor.length > 1) {
     const cuerpo = valor.slice(0, -1);
     const dv = valor.slice(-1);
-    
-    // Formatear cuerpo con puntos
     const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     valor = `${cuerpoFormateado}-${dv}`;
   }
   
-  // Actualizar el valor en el estado/formulario
+  // Aseguramos asignación reactiva
   form.rut = valor;
 };
 
