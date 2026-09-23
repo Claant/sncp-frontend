@@ -158,3 +158,31 @@
   }
 }
 
+/* ====================================================================
+   NOTIFICACIÓN / BANNER DE ALERTA EN FLUJO ESTÁTICO DE PÁGINA
+   ==================================================================== */
+.notificacion {
+  padding: 14px 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: left;
+  box-sizing: border-box;
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+.notificacion.error {
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-left: 5px solid #ef4444;
+  color: #991b1b;
+}
+
+.notificacion.exito {
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
+  border-left: 5px solid #22c55e;
+  color: #166534;
+}
