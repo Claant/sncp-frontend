@@ -19,10 +19,13 @@
           <div class="campo-entrada">
             <label>RUT Nacional</label>
             <input
-             type="text"
-              v-model="formulario.rut"
-              @input="formulario.rut = limpiarRutInscripcion(formulario.rut)" 
-              placeholder="Ej: 17.432.981-6" required :disabled="guardando" />
+              type="text"
+              v-model="paciente.rut"
+              @input="paciente.rut = limpiarRutInscripcion(paciente.rut)" 
+              placeholder="Ej: 17.432.981-6" 
+              required 
+              :disabled="guardando" 
+            />
           </div>
           <div class="campo-entrada">
             <label>Nombre Completo</label>
@@ -93,10 +96,6 @@
   </div>
 </template>
 
-
-
-
-<!-- views/RegistroPaciente.vue (SCRIPT SETUP - CORREGIDO) -->
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
@@ -116,7 +115,7 @@ const paciente = reactive({
   centro_salud_id: ''
 });
 
-// Modelo reactivo para el esquema aislado de la Dirección (Mapea 'ciudad')
+// Modelo reactivo para el esquema aislado de la Dirección
 const direccion = reactive({
   calle: '',
   numero: '',
@@ -124,7 +123,6 @@ const direccion = reactive({
   ciudad: ''
 });
 
-// Temporizador interno para desvanecer las notificaciones efímeras
 let timeoutAlerta = null;
 
 const lanzarAlertaLocal = (texto, tipo) => {
@@ -135,32 +133,29 @@ const lanzarAlertaLocal = (texto, tipo) => {
   timeoutAlerta = setTimeout(() => {
     notificacion.texto = '';
     notificacion.tipo = '';
-  }, 4000); // 4 segundos en pantalla y se desvanece solo
+  }, 4000);
 };
 
-// FUNCIÓN DE SANITIZACIÓN Y FORMATO VISUAL DEL RUT EN TIEMPO REAL
+// FUNCIÓN DE SANITIZACIÓN Y FORMATO VISUAL DEL RUT EN TIEMPO REAL (XX.XXX.XXX-X)
 const limpiarRutInscripcion = (rutRaw) => {
   if (!rutRaw) return '';
   
-  // 1. Limpia cualquier carácter que no sea número o K/k
+  // 1. Filtra cualquier carácter que no sea número o K/k
   let limpio = rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
   if (limpio.length === 0) return '';
   if (limpio.length === 1) return limpio;
 
-  // 2. Separa el cuerpo del dígito verificador
+  // 2. Separa el cuerpo numérico del dígito verificador
   const cuerpo = limpio.slice(0, -1);
   const dv = limpio.slice(-1);
 
   // 3. Formatea el cuerpo con puntos de miles
   const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
-  // 4. Retorna el RUT formateado: XX.XXX.XXX-X
+  // 4. Retorna la estructura estandarizada
   return `${cuerpoFormateado}-${dv}`;
 };
 
-
-
-// Consumo nativo mediante Fetch al inicializar para rellenar los establecimientos
 onMounted(async () => {
   try {
     const respuesta = await authStore.fetchSeguro('/centros-salud');
@@ -172,7 +167,6 @@ onMounted(async () => {
   }
 });
 
-// Despacho controlado en cascada hacia /api/direcciones y /api/pacientes
 const procesarRegistroPaciente = async () => {
   guardando.value = true;
   notificacion.texto = '';
@@ -180,7 +174,6 @@ const procesarRegistroPaciente = async () => {
   try {
     let direccionIdFinal = paciente.direccion_id;
 
-    // PASO 1: Si el usuario es médico, ejecuta la persistencia intermedia de la dirección
     if (authStore.obtenerRol === 'medico') {
       const resDireccion = await authStore.fetchSeguro('/direcciones', {
         method: 'POST',
@@ -193,12 +186,11 @@ const procesarRegistroPaciente = async () => {
         })
       });
 
-      if (!resDireccion) return; // Detención si falló la sesión
+      if (!resDireccion) return;
       
       const datosDireccion = await resDireccion.json();
 
       if (!resDireccion.ok) {
-        // Captura de errores de Zod en el endpoint de direcciones
         if (datosDireccion.detalles && Array.isArray(datosDireccion.detalles) && datosDireccion.detalles.length > 0) {
           throw new Error(datosDireccion.detalles[0].mensaje);
         }
@@ -208,9 +200,8 @@ const procesarRegistroPaciente = async () => {
       direccionIdFinal = datosDireccion.direccion?._id || datosDireccion.direccion?.id;
     }
 
-    // PASO 2: Construcción del payload final
     const payloadFinal = {
-      rut: limpiarRutInscripcion(paciente.rut),
+      rut: paciente.rut.trim(),
       nombre: paciente.nombre.trim(),
       fecha_nacimiento: paciente.fecha_nacimiento,
       centro_salud_id: paciente.centro_salud_id,
@@ -228,17 +219,14 @@ const procesarRegistroPaciente = async () => {
     const datosPaciente = await resPaciente.json();
 
     if (!resPaciente.ok) {
-      // Captura de errores de Zod en el endpoint de pacientes
       if (datosPaciente.detalles && Array.isArray(datosPaciente.detalles) && datosPaciente.detalles.length > 0) {
         throw new Error(datosPaciente.detalles[0].mensaje);
       }
       throw new Error(datosPaciente.msg || 'Falla crítica al registrar la inscripción del paciente.');
     }
 
-    // Respuesta de éxito
     lanzarAlertaLocal(datosPaciente.msg || 'Paciente inscrito exitosamente en este centro de salud.', 'exito');
 
-    // Limpieza atómica tras guardar con éxito
     Object.keys(paciente).forEach(key => paciente[key] = '');
     Object.keys(direccion).forEach(key => direccion[key] = '');
 
@@ -250,9 +238,7 @@ const procesarRegistroPaciente = async () => {
 };
 </script>
 
-
 <style scoped>
-/* Estilos locales complementarios para empaquetar el alta de pacientes */
 .acciones-formulario {
   display: flex;
   justify-content: flex-end;
