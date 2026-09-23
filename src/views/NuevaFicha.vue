@@ -140,7 +140,6 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
@@ -164,20 +163,26 @@ const formulario = reactive({
   codigo_enfermedad: '', descripcion: ''
 });
 
-// Formateador dinámico de RUT chileno en pantalla (Ej: 12.345.678-K)
-const formatearRutInput = (e) => {
+// Helper interno para limpiar RUT (solo números y K)
+const obtenerRutLimpio = (rutRaw) => {
+  if (!rutRaw) return '';
+  return rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
+};
+
+// Formateador dinámico de RUT chileno con puntos y guion (Ej: 17.432.981-6)
+const alEscribirRut = (e) => {
   if (!e || !e.target) return;
   
-  let valor = e.target.value.replace(/[^0-9kK]/g, '').toUpperCase();
+  let limpio = obtenerRutLimpio(e.target.value);
   
-  if (valor.length > 1) {
-    const cuerpo = valor.slice(0, -1);
-    const dv = valor.slice(-1);
+  if (limpio.length > 1) {
+    const cuerpo = limpio.slice(0, -1);
+    const dv = limpio.slice(-1);
     const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    valor = `${cuerpoFormateado}-${dv}`;
+    formulario.rut = `${cuerpoFormateado}-${dv}`;
+  } else {
+    formulario.rut = limpio;
   }
-  
-  formulario.rut = valor;
 };
 
 // Helper de notificaciones locales
@@ -235,10 +240,19 @@ const evaluarPasoSiguiente = () => {
     pasoActual.value = 2;
   } 
   else if (pasoActual.value === 2) {
+    const rutLimpio = obtenerRutLimpio(formulario.rut);
+
     if (!formulario.rut.trim() || !formulario.nombre.trim() || !formulario.fecha_nacimiento || !formulario.centro_salud_id) {
       lanzarAlertaLocal('Por favor, complete todos los datos personales del Paso 2.', 'error');
       return;
     }
+
+    // Validación previa de longitud (entre 8 y 9 caracteres limpios)
+    if (rutLimpio.length < 8 || rutLimpio.length > 9) {
+      lanzarAlertaLocal('El RUT ingresado debe tener entre 8 y 9 caracteres (ej: 17.432.981-6).', 'error');
+      return;
+    }
+
     pasoActual.value = 3;
   } 
   else if (pasoActual.value === 3) {
