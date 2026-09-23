@@ -18,16 +18,14 @@
         <div class="grilla-formulario">
           <div class="campo-entrada">
             <label>RUT Nacional</label>
-            <input
-              type="text"
-              v-model="paciente.rut"
-              @blur="paciente.rut = formatearRutChile(paciente.rut)"
-              placeholder="Ej: 17.432.981-6" 
-              required 
-              :disabled="guardando" 
-              maxlength="12"
-            />
-          </div>
+            <input 
+    type="text" 
+    :value="formulario.rut" 
+    @input="formatearRutEnVivo"
+    placeholder="17.432.981-6" 
+    maxlength="12"
+  />
+</div>
           <div class="campo-entrada">
             <label>Nombre Completo</label>
             <input type="text" v-model="paciente.nombre" placeholder="Juan Carlos Pérez" required :disabled="guardando" />
@@ -137,38 +135,40 @@ const lanzarAlertaLocal = (texto, tipo) => {
     notificacion.tipo = '';
   }, 4000);
 };
-
-// 2. FUNCIÓN DE FORMATO ROBUSTA: No fragmenta el RUT mientras el usuario está tipeando
-const aplicarFormatoRut = (rutRaw) => {
+// Helper interno para limpiar el RUT (mantiene únicamente números y K)
+const obtenerRutLimpio = (rutRaw) => {
   if (!rutRaw) return '';
-  
-  // Limpia cualquier carácter que no sea número o K/k
-  let limpio = rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
-  if (limpio.length === 0) return '';
-
-  // Si tiene menos de 2 caracteres, lo muestra tal cual sin poner guiones prematuros
-  if (limpio.length < 2) return limpio;
-
-  // Separa el cuerpo numérico del dígito verificador
-  const cuerpo = limpio.slice(0, -1);
-  const dv = limpio.slice(-1);
-
-  // Formatea el cuerpo con puntos de miles
-  const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-  return `${cuerpoFormateado}-${dv}`;
+  return rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
 };
 
-// 3. COMPUTED PROPERTY CON GETTER Y SETTER NATIVO
-const rutFormateado = computed({
-  get() {
-    return aplicarFormatoRut(paciente.rut);
-  },
-  set(nuevoValor) {
-    // Almacena el valor formateado directamente en paciente.rut
-    paciente.rut = aplicarFormatoRut(nuevoValor);
+// Formateador inmediato con reajuste visual en tiempo real
+const formatearRutEnVivo = (e) => {
+  if (!e || !e.target) return;
+
+  const input = e.target;
+  let limpio = obtenerRutLimpio(input.value);
+
+  // Limitar a un máximo de 9 caracteres limpios (cuerpo 8 + DV 1)
+  if (limpio.length > 9) {
+    limpio = limpio.slice(0, 9);
   }
-});
+
+  let formateado = limpio;
+
+  // Aplicar formato dinámico
+  if (limpio.length > 1) {
+    const cuerpo = limpio.slice(0, -1);
+    const dv = limpio.slice(-1);
+    
+    // Agrega puntos de miles de derecha a izquierda
+    const cuerpoConPuntos = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    formateado = `${cuerpoConPuntos}-${dv}`;
+  }
+
+  // Asignamos tanto la variable reactiva como el valor directo del elemento del DOM
+  formulario.rut = formateado;
+  input.value = formateado;
+};
 
 onMounted(async () => {
   try {
