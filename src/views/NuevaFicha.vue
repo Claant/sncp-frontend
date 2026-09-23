@@ -5,17 +5,29 @@
       <p class="descripcion">Registro de Atención Unificada (Paciente Nuevo Detectado)</p>
     </header>
 
-    <!-- Notificaciones y Alertas del Sistema -->
-    <div v-if="notificacion.texto" :class="['notificacion', notificacion.tipo]">
-      <p class="notificacion-titulo">{{ notificacion.texto }}</p>
-      
-      <!-- Viñetas con detalles específicos de validación (ej: error en formato CIE-10) -->
-      <ul v-if="notificacion.detalles && notificacion.detalles.length > 0" class="notificacion-detalles">
-        <li v-for="(detalle, idx) in notificacion.detalles" :key="idx">
-          • {{ detalle }}
-        </li>
-      </ul>
-    </div>
+    <!-- NOTIFICACIÓN FLOTANTE / SOBREPUESTA (TOAST) -->
+    <transition name="fade-slide">
+      <div 
+        v-if="notificacion.texto" 
+        :class="['notificacion-flotante', notificacion.tipo]"
+        role="alert"
+      >
+        <div class="notificacion-contenido">
+          <p class="notificacion-titulo">{{ notificacion.texto }}</p>
+          
+          <!-- Viñetas con detalles específicos de validación (ej: error en formato CIE-10) -->
+          <ul v-if="notificacion.detalles && notificacion.detalles.length > 0" class="notificacion-detalles">
+            <li v-for="(detalle, idx) in notificacion.detalles" :key="idx">
+              • {{ detalle }}
+            </li>
+          </ul>
+        </div>
+
+        <button type="button" class="btn-cerrar-notificacion" @click="cerrarAlertaManual">
+          ✕
+        </button>
+      </div>
+    </transition>
 
     <!-- INDICADOR VISUAL DE PASOS (STEPPER) -->
     <div class="stepper-contenedor">
@@ -158,21 +170,25 @@ const formulario = reactive({
   codigo_enfermedad: '', descripcion: ''
 });
 
-// Helper de notificaciones efímeras para limpiar la UI médica de forma autónoma
+// Helper de notificaciones efímeras y flotantes
 const lanzarAlertaLocal = (texto, tipo, detalles = []) => {
   if (timeoutAlerta) clearTimeout(timeoutAlerta);
   notificacion.texto = texto;
   notificacion.tipo = tipo;
   notificacion.detalles = detalles;
   
-  // Si hay múltiples errores de validación, se aumenta ligeramente el tiempo visible
   const tiempoVisibilidad = detalles.length > 0 ? 8000 : 4000;
 
   timeoutAlerta = setTimeout(() => {
-    notificacion.texto = '';
-    notificacion.tipo = '';
-    notificacion.detalles = [];
+    cerrarAlertaManual();
   }, tiempoVisibilidad);
+};
+
+const cerrarAlertaManual = () => {
+  if (timeoutAlerta) clearTimeout(timeoutAlerta);
+  notificacion.texto = '';
+  notificacion.tipo = '';
+  notificacion.detalles = [];
 };
 
 const obtenerNombrePaso = (step) => {
@@ -180,7 +196,6 @@ const obtenerNombrePaso = (step) => {
   return nombres[step];
 };
 
-// FUNCIÓN MAESTRA DE SANITIZACIÓN: Asegura el formato de forma estricta (ej: 17432981-6)
 const limpiarRutFicha = (rutRaw) => {
   if (!rutRaw) return '';
   
@@ -206,15 +221,13 @@ onMounted(async () => {
 
 const volverPaso = () => {
   if (pasoActual.value > 1) {
-    notificacion.texto = '';
-    notificacion.detalles = [];
+    cerrarAlertaManual();
     pasoActual.value--;
   }
 };
 
 const evaluarPasoSiguiente = () => {
-  notificacion.texto = '';
-  notificacion.detalles = [];
+  cerrarAlertaManual();
 
   if (pasoActual.value === 1) {
     if (!formulario.calle.trim() || !formulario.numero.trim() || !formulario.comuna.trim() || !formulario.ciudad.trim()) {
@@ -251,8 +264,7 @@ const evaluarPasoSiguiente = () => {
 
 const enviarExpedienteConsolidado = async () => {
   procesando.value = true;
-  notificacion.texto = '';
-  notificacion.detalles = [];
+  cerrarAlertaManual();
 
   const datosEnvio = {
     calle: formulario.calle.trim(),
@@ -284,7 +296,6 @@ const enviarExpedienteConsolidado = async () => {
     const datos = await respuesta.json();
 
     if (!respuesta.ok) {
-      // 💡 CAPTURA INTELIGENTE DE ERRORES DETALLADOS (ZOD):
       if (datos.detalles && Array.isArray(datos.detalles) && datos.detalles.length > 0) {
         const listaErrores = datos.detalles.map(d => d.mensaje || d.message);
         lanzarAlertaLocal('No se pudo registrar la ficha médica:', 'error', listaErrores);
@@ -315,6 +326,4 @@ const enviarExpedienteConsolidado = async () => {
 
 <style scoped>
 @import "../assets/css/nuevaFichaStyles.css";
-
-
 </style>
