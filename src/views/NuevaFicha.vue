@@ -7,7 +7,14 @@
 
     <!-- Notificaciones y Alertas del Sistema -->
     <div v-if="notificacion.texto" :class="['notificacion', notificacion.tipo]">
-      {{ notificacion.texto }}
+      <p class="notificacion-titulo">{{ notificacion.texto }}</p>
+      
+      <!-- Viñetas con detalles específicos de validación (ej: error en formato CIE-10) -->
+      <ul v-if="notificacion.detalles && notificacion.detalles.length > 0" class="notificacion-detalles">
+        <li v-for="(detalle, idx) in notificacion.detalles" :key="idx">
+          • {{ detalle }}
+        </li>
+      </ul>
     </div>
 
     <!-- INDICADOR VISUAL DE PASOS (STEPPER) -->
@@ -130,7 +137,6 @@
   </div>
 </template>
 
-<!-- views/NuevaFicha.vue (SCRIPT SETUP - OPTIMIZADO) -->
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
@@ -141,7 +147,7 @@ const authStore = useAuthStore();
 const pasoActual = ref(1);
 const centrosSalud = ref([]);
 const procesando = ref(false);
-const notificacion = reactive({ texto: '', tipo: '' });
+const notificacion = reactive({ texto: '', tipo: '', detalles: [] });
 let timeoutAlerta = null;
 
 // Estructura de variables reactivas mapeada al req.body del Backend
@@ -153,15 +159,20 @@ const formulario = reactive({
 });
 
 // Helper de notificaciones efímeras para limpiar la UI médica de forma autónoma
-const lanzarAlertaLocal = (texto, tipo) => {
+const lanzarAlertaLocal = (texto, tipo, detalles = []) => {
   if (timeoutAlerta) clearTimeout(timeoutAlerta);
   notificacion.texto = texto;
   notificacion.tipo = tipo;
+  notificacion.detalles = detalles;
   
+  // Si hay múltiples errores de validación, se aumenta ligeramente el tiempo visible
+  const tiempoVisibilidad = detalles.length > 0 ? 8000 : 4000;
+
   timeoutAlerta = setTimeout(() => {
     notificacion.texto = '';
     notificacion.tipo = '';
-  }, 4000); // 4 segundos en pantalla y se desvanece solo
+    notificacion.detalles = [];
+  }, tiempoVisibilidad);
 };
 
 const obtenerNombrePaso = (step) => {
@@ -173,19 +184,15 @@ const obtenerNombrePaso = (step) => {
 const limpiarRutFicha = (rutRaw) => {
   if (!rutRaw) return '';
   
-  // 1. Filtra y limpia puntos, espacios o guiones mal puestos, dejando solo números y la letra K
   let limpio = rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
   if (limpio.length < 2) return limpio;
 
-  // 2. Extrae el dígito verificador (último carácter) y el cuerpo numérico
   const cuerpo = limpio.slice(0, -1);
   const dv = limpio.slice(-1);
   
-  // 3. Retorna la cadena unificada garantizando el guion intermedio
   return `${cuerpo}-${dv}`; 
 };
 
-// Carga asíncrona al montar el componente para poblar el selector del Paso 2
 onMounted(async () => {
   try {
     const respuesta = await authStore.fetchSeguro('/centros-salud');
@@ -200,13 +207,14 @@ onMounted(async () => {
 const volverPaso = () => {
   if (pasoActual.value > 1) {
     notificacion.texto = '';
+    notificacion.detalles = [];
     pasoActual.value--;
   }
 };
 
-// Validador perimetral de campos requeridos antes de avanzar en el Stepper
 const evaluarPasoSiguiente = () => {
   notificacion.texto = '';
+  notificacion.detalles = [];
 
   if (pasoActual.value === 1) {
     if (!formulario.calle.trim() || !formulario.numero.trim() || !formulario.comuna.trim() || !formulario.ciudad.trim()) {
@@ -241,51 +249,53 @@ const evaluarPasoSiguiente = () => {
   }
 };
 
-// Despacho del expediente compuesto hacia el endpoint unificado /atenciones/completa
 const enviarExpedienteConsolidado = async () => {
   procesando.value = true;
   notificacion.texto = '';
+  notificacion.detalles = [];
 
-  // 1. Clonamos el formulario local para manipular el payload de forma segura sin romper la reactividad
   const datosEnvio = {
     calle: formulario.calle.trim(),
     numero: formulario.numero.trim(),
     comuna: formulario.comuna.trim(),
     ciudad: formulario.ciudad.trim(),
-    rut: limpiarRutFicha(formulario.rut), // Fuerza el formato estricto con guion intermedio
+    rut: limpiarRutFicha(formulario.rut),
     nombre: formulario.nombre.trim(),
     fecha_nacimiento: formulario.fecha_nacimiento,
     centro_salud_id: formulario.centro_salud_id,
     motivo_consulta: formulario.motivo_consulta.trim(),
-    codigo_enfermedad: formulario.codigo_enfermedad.trim().toUpperCase(), // Normalizado a CIE-10 exacto
+    codigo_enfermedad: formulario.codigo_enfermedad.trim().toUpperCase(),
     descripcion: formulario.descripcion.trim()
   };
 
-  // 2. Si hay fecha opcional, la limpiamos, de lo contrario la omitimos para usar el default de Atlas
   if (formulario.fecha) {
     datosEnvio.fecha = formulario.fecha;
   }
 
   try {
-    // 3. Petición POST despachada a través de tu cliente seguro de Pinia
     const respuesta = await authStore.fetchSeguro('/atenciones/completa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(datosEnvio)
     });
 
-    if (!respuesta) return; // Detención controlada si el token expiró (401/403)
+    if (!respuesta) return;
 
     const datos = await respuesta.json();
 
     if (!respuesta.ok) {
-      throw new Error(datos.msg || 'Error transaccional al procesar el expediente integrado.');
+      // 💡 CAPTURA INTELIGENTE DE ERRORES DETALLADOS (ZOD):
+      if (datos.detalles && Array.isArray(datos.detalles) && datos.detalles.length > 0) {
+        const listaErrores = datos.detalles.map(d => d.mensaje || d.message);
+        lanzarAlertaLocal('No se pudo registrar la ficha médica:', 'error', listaErrores);
+      } else {
+        lanzarAlertaLocal(datos.msg || 'Error transaccional al procesar el expediente integrado.', 'error');
+      }
+      return;
     }
 
-    // 4. RESPUESTA DE ÉXITO GOVERNADA POR TU CONTROLADOR RESILIENTE
     lanzarAlertaLocal(datos.msg || 'Expediente compuesto registrado con éxito.', 'exito');
 
-    // 5. Limpieza atómica y reactiva de los campos locales mediante reasignación masiva segura
     Object.assign(formulario, {
       calle: '', numero: '', comuna: '', ciudad: '',
       rut: '', nombre: '', fecha_nacimiento: '', centro_salud_id: '',
@@ -293,7 +303,6 @@ const enviarExpedienteConsolidado = async () => {
       codigo_enfermedad: '', descripcion: ''
     });
 
-    // Devolvemos el asistente visual al Paso 1 de forma limpia
     pasoActual.value = 1;
 
   } catch (error) {
@@ -304,11 +313,24 @@ const enviarExpedienteConsolidado = async () => {
 };
 </script>
 
-
-
-
 <style scoped>
-
 @import "../assets/css/nuevaFichaStyles.css";
 
+/* Estilos de soporte para listas de errores en notificaciones */
+.notificacion-titulo {
+  margin: 0;
+  font-weight: 700;
+}
+
+.notificacion-detalles {
+  margin: 6px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notificacion-detalles li {
+  font-size: 0.88rem;
+  margin-top: 3px;
+  line-height: 1.3;
+}
 </style>
