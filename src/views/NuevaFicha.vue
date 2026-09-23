@@ -60,7 +60,7 @@
           <div class="grilla-campos">
             <div class="campo">
               <label>RUT Nacional</label>
-              <input type="text" v-model="formulario.rut" placeholder="17.432.981-6" />
+              <input type="text" v-model="form.rut" placeholder="17.432.981-6" max/>
             </div>
             <div class="campo">
               <label>Nombre Completo</label>
@@ -310,6 +310,29 @@ const enviarExpedienteConsolidado = async () => {
     procesando.value = false;
   }
 };
+
+// En tu componente Vue 3 (NuevaFicha.vue)
+
+const formatearRutInput = (event) => {
+  let valor = event.target.value.replace(/[^0-9kK]/g, '').toUpperCase();
+  
+  if (valor.length > 1) {
+    const cuerpo = valor.slice(0, -1);
+    const dv = valor.slice(-1);
+    
+    // Formatear cuerpo con puntos
+    const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    valor = `${cuerpoFormateado}-${dv}`;
+  }
+  
+  // Actualizar el valor en el estado/formulario
+  form.rut = valor;
+};
+
+
+
+
+
 </script>
 
 <style scoped>
