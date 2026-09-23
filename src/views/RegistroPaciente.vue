@@ -24,6 +24,7 @@
               placeholder="Ej: 17.432.981-6" 
               required 
               :disabled="guardando" 
+              maxlength="12"
             />
           </div>
           <div class="campo-entrada">
@@ -96,7 +97,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+// 1. CORRECCIÓN CRÍTICA: Se añade 'computed' a la importación de Vue
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
 
 const authStore = useAuthStore();
@@ -135,14 +137,16 @@ const lanzarAlertaLocal = (texto, tipo) => {
   }, 4000);
 };
 
-// FUNCIÓN DE FORMATO: Convierte "174329816" en "17.432.981-6"
+// 2. FUNCIÓN DE FORMATO ROBUSTA: No fragmenta el RUT mientras el usuario está tipeando
 const aplicarFormatoRut = (rutRaw) => {
   if (!rutRaw) return '';
   
   // Limpia cualquier carácter que no sea número o K/k
   let limpio = rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
   if (limpio.length === 0) return '';
-  if (limpio.length === 1) return limpio;
+
+  // Si tiene menos de 2 caracteres, lo muestra tal cual sin poner guiones prematuros
+  if (limpio.length < 2) return limpio;
 
   // Separa el cuerpo numérico del dígito verificador
   const cuerpo = limpio.slice(0, -1);
@@ -154,12 +158,13 @@ const aplicarFormatoRut = (rutRaw) => {
   return `${cuerpoFormateado}-${dv}`;
 };
 
-// COMPUTED PROPERTY: Intercepta la escritura y actualiza paciente.rut con puntos y guion
+// 3. COMPUTED PROPERTY CON GETTER Y SETTER NATIVO
 const rutFormateado = computed({
   get() {
     return aplicarFormatoRut(paciente.rut);
   },
   set(nuevoValor) {
+    // Almacena el valor formateado directamente en paciente.rut
     paciente.rut = aplicarFormatoRut(nuevoValor);
   }
 });
