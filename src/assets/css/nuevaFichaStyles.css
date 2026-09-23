@@ -157,3 +157,21 @@
     transform: translateY(0); 
   }
 }
+
+/* Estilos de soporte para listas de errores en notificaciones */
+.notificacion-titulo {
+  margin: 0;
+  font-weight: 700;
+}
+
+.notificacion-detalles {
+  margin: 6px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notificacion-detalles li {
+  font-size: 0.88rem;
+  margin-top: 3px;
+  line-height: 1.3;
+}
