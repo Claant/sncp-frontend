@@ -164,10 +164,11 @@ const procesarRegistroPaciente = async () => {
   try {
     let direccionIdFinal = paciente.direccion_id;
 
-    // PASO 1: Si el usuario es médico, ejecuta la persistencia intermedia de la dirección residencial
+    // PASO 1: Si el usuario es médico, ejecuta la persistencia intermedia de la dirección
     if (authStore.obtenerRol === 'medico') {
       const resDireccion = await authStore.fetchSeguro('/direcciones', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           calle: direccion.calle.trim(),
           numero: direccion.numero.trim(),
@@ -178,19 +179,22 @@ const procesarRegistroPaciente = async () => {
 
       if (!resDireccion) return; // Detención si falló la sesión
       
-      // CORRECCIÓN: Consumimos el JSON una única vez en una variable para evitar el crash del body stream
       const datosDireccion = await resDireccion.json();
 
       if (!resDireccion.ok) {
-        throw new Error(datosDireccion.msg || 'Falla crítica al registrar la dirección');
+        // Captura de errores de Zod en el endpoint de direcciones
+        if (datosDireccion.detalles && Array.isArray(datosDireccion.detalles) && datosDireccion.detalles.length > 0) {
+          throw new Error(datosDireccion.detalles[0].mensaje);
+        }
+        throw new Error(datosDireccion.msg || 'Falla crítica al registrar la dirección.');
       }
 
-      direccionIdFinal = datosDireccion.direccion?._id || datosDireccion.direccion?.id; // Captura el ID real de Atlas
+      direccionIdFinal = datosDireccion.direccion?._id || datosDireccion.direccion?.id;
     }
 
-    // PASO 2: Construcción del payload final e inyección de relación relacional
+    // PASO 2: Construcción del payload final
     const payloadFinal = {
-      rut: limpiarRutInscripcion(paciente.rut), // Fuerza el RUT limpio con guion antes de viajar por red
+      rut: limpiarRutInscripcion(paciente.rut),
       nombre: paciente.nombre.trim(),
       fecha_nacimiento: paciente.fecha_nacimiento,
       centro_salud_id: paciente.centro_salud_id,
@@ -199,6 +203,7 @@ const procesarRegistroPaciente = async () => {
 
     const resPaciente = await authStore.fetchSeguro('/pacientes', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payloadFinal)
     });
 
@@ -207,20 +212,23 @@ const procesarRegistroPaciente = async () => {
     const datosPaciente = await resPaciente.json();
 
     if (!resPaciente.ok) {
+      // Captura de errores de Zod en el endpoint de pacientes
+      if (datosPaciente.detalles && Array.isArray(datosPaciente.detalles) && datosPaciente.detalles.length > 0) {
+        throw new Error(datosPaciente.detalles[0].mensaje);
+      }
       throw new Error(datosPaciente.msg || 'Falla crítica al registrar la inscripción del paciente.');
     }
 
-    // CORRECCIÓN UX: Removemos el alert() invasivo y pasamos el mensaje a la alerta reactiva unificada
+    // Respuesta de éxito
     lanzarAlertaLocal(datosPaciente.msg || 'Paciente inscrito exitosamente en este centro de salud.', 'exito');
 
-    // Limpieza atómica y reactiva de campos tras guardar con éxito
+    // Limpieza atómica tras guardar con éxito
     Object.keys(paciente).forEach(key => paciente[key] = '');
     Object.keys(direccion).forEach(key => direccion[key] = '');
 
   } catch (error) {
     lanzarAlertaLocal(error.message, 'error');
   } finally {
-    // CORRECCIÓN DE SINTAXIS: Cambiado 'bits' por 'finally' para corregir la línea en rojo de VS Code
     guardando.value = false;
   }
 };

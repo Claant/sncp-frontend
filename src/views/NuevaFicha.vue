@@ -5,9 +5,14 @@
       <p class="descripcion">Registro de Atención Unificada (Paciente Nuevo Detectado)</p>
     </header>
 
-    <!-- Notificaciones y Alertas del Sistema -->
+    <!-- NOTIFICACIÓN / ALERTA DE SISTEMA CON SOPORTE PARA VIÑETAS DE ZOD -->
     <div v-if="notificacion.texto" :class="['notificacion', notificacion.tipo]">
-      {{ notificacion.texto }}
+      <p class="notificacion-titulo">{{ notificacion.texto }}</p>
+      <ul v-if="notificacion.detalles && notificacion.detalles.length > 0" class="notificacion-lista">
+        <li v-for="(detalle, idx) in notificacion.detalles" :key="idx">
+          • {{ detalle }}
+        </li>
+      </ul>
     </div>
 
     <!-- INDICADOR VISUAL DE PASOS (STEPPER) -->
@@ -18,7 +23,7 @@
       </div>
     </div>
 
-    <!-- CUERPO DEL ASISTENTE DINÁMICO CON BLOQUES DIVS LIMPIOS -->
+    <!-- CUERPO DEL ASISTENTE DINÁMICO -->
     <div class="formulario-clinico">
       
       <!-- PASO 1: DOMICILIO -->
@@ -114,7 +119,7 @@
         </div>
       </div>
 
-      <!-- BOTONERA DE CONTROL CON BOTONES PLANOS TIPO BUTTON -->
+      <!-- BOTONERA DE CONTROL -->
       <div class="contenedor-acciones-step">
         <button type="button" v-if="pasoActual > 1" @click="volverPaso" class="btn-volver" :disabled="procesando">
           Volver
@@ -130,7 +135,6 @@
   </div>
 </template>
 
-<!-- views/NuevaFicha.vue (SCRIPT SETUP - OPTIMIZADO) -->
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth.js';
@@ -141,7 +145,9 @@ const authStore = useAuthStore();
 const pasoActual = ref(1);
 const centrosSalud = ref([]);
 const procesando = ref(false);
-const notificacion = reactive({ texto: '', tipo: '' });
+
+// Objeto de notificación enriquecido (admite título y detalles de Zod)
+const notificacion = reactive({ texto: '', tipo: '', detalles: [] });
 let timeoutAlerta = null;
 
 // Estructura de variables reactivas mapeada al req.body del Backend
@@ -152,16 +158,26 @@ const formulario = reactive({
   codigo_enfermedad: '', descripcion: ''
 });
 
-// Helper de notificaciones efímeras para limpiar la UI médica de forma autónoma
-const lanzarAlertaLocal = (texto, tipo) => {
+// Helper de notificaciones locales adaptado a arreglos de error
+const lanzarAlertaLocal = (texto, tipo, detalles = []) => {
   if (timeoutAlerta) clearTimeout(timeoutAlerta);
   notificacion.texto = texto;
   notificacion.tipo = tipo;
+  notificacion.detalles = detalles;
   
+  // Si hay detalles múltiples, extendemos el tiempo a 7 segundos para facilitar la lectura
+  const duracion = detalles.length > 0 ? 7000 : 4000;
+
   timeoutAlerta = setTimeout(() => {
-    notificacion.texto = '';
-    notificacion.tipo = '';
-  }, 4000); // 4 segundos en pantalla y se desvanece solo
+    limpiarAlerta();
+  }, duracion);
+};
+
+const limpiarAlerta = () => {
+  if (timeoutAlerta) clearTimeout(timeoutAlerta);
+  notificacion.texto = '';
+  notificacion.tipo = '';
+  notificacion.detalles = [];
 };
 
 const obtenerNombrePaso = (step) => {
@@ -169,23 +185,15 @@ const obtenerNombrePaso = (step) => {
   return nombres[step];
 };
 
-// FUNCIÓN MAESTRA DE SANITIZACIÓN: Asegura el formato de forma estricta (ej: 17432981-6)
 const limpiarRutFicha = (rutRaw) => {
   if (!rutRaw) return '';
-  
-  // 1. Filtra y limpia puntos, espacios o guiones mal puestos, dejando solo números y la letra K
   let limpio = rutRaw.replace(/[^0-9kK]/g, '').toUpperCase();
   if (limpio.length < 2) return limpio;
-
-  // 2. Extrae el dígito verificador (último carácter) y el cuerpo numérico
   const cuerpo = limpio.slice(0, -1);
   const dv = limpio.slice(-1);
-  
-  // 3. Retorna la cadena unificada garantizando el guion intermedio
   return `${cuerpo}-${dv}`; 
 };
 
-// Carga asíncrona al montar el componente para poblar el selector del Paso 2
 onMounted(async () => {
   try {
     const respuesta = await authStore.fetchSeguro('/centros-salud');
@@ -199,14 +207,13 @@ onMounted(async () => {
 
 const volverPaso = () => {
   if (pasoActual.value > 1) {
-    notificacion.texto = '';
+    limpiarAlerta();
     pasoActual.value--;
   }
 };
 
-// Validaciones locales rápidas de campos no vacíos para permitir navegar entre los pasos
 const evaluarPasoSiguiente = () => {
-  notificacion.texto = '';
+  limpiarAlerta();
 
   if (pasoActual.value === 1) {
     if (!formulario.calle.trim() || !formulario.numero.trim() || !formulario.comuna.trim() || !formulario.ciudad.trim()) {
@@ -238,10 +245,9 @@ const evaluarPasoSiguiente = () => {
   }
 };
 
-// Envío a la API y procesamiento de respuestas del middleware de Zod
+// Envío a la API utilizando ventanas emergentes alert() idénticas a Dashboard.vue
 const enviarExpedienteConsolidado = async () => {
   procesando.value = true;
-  notificacion.texto = '';
 
   const datosEnvio = {
     calle: formulario.calle.trim(),
@@ -273,21 +279,21 @@ const enviarExpedienteConsolidado = async () => {
     const datos = await respuesta.json();
 
     if (!respuesta.ok) {
-      // Captura de los errores mapeados en validatorMiddleware.js
+      // 💡 CAPTURA E IMPRESIÓN DE ERRORES CON ALERT NATIVO (Formato Dashboard)
       if (datos.detalles && Array.isArray(datos.detalles) && datos.detalles.length > 0) {
-        // Tomamos el mensaje explícito del primer objeto dentro del arreglo 'detalles'
-        const primerErrorZod = datos.detalles[0].mensaje;
-        lanzarAlertaLocal(primerErrorZod, 'error');
+        // Mapeamos los errores devueltos por Zod en viñetas formateadas
+        const listaErrores = datos.detalles.map(d => `• ${d.mensaje || d}`).join('\n');
+        alert(`No se pudo registrar la ficha clínica:\n\n${listaErrores}`);
       } else {
-        lanzarAlertaLocal(datos.msg || 'Ocurrió un error al procesar el registro.', 'error');
+        alert(`⚠️ ${datos.msg || 'Ocurrió un error al procesar el registro.'}`);
       }
       return;
     }
 
-    // Respuesta exitosa del backend
-    lanzarAlertaLocal(datos.msg || 'Ficha clínica registrada con éxito.', 'exito');
+    // Ventana emergente de éxito
+    alert(`✅ ${datos.msg || 'Ficha clínica registrada con éxito.'}`);
 
-    // Limpieza atómica del formulario
+    // Limpieza de campos y retorno al Paso 1
     Object.assign(formulario, {
       calle: '', numero: '', comuna: '', ciudad: '',
       rut: '', nombre: '', fecha_nacimiento: '', centro_salud_id: '',
@@ -298,18 +304,16 @@ const enviarExpedienteConsolidado = async () => {
     pasoActual.value = 1;
 
   } catch (error) {
-    lanzarAlertaLocal(error.message, 'error');
+    console.error('Error al enviar el expediente:', error);
+    alert(`No se pudo conectar con el servidor: ${error.message}`);
   } finally {
     procesando.value = false;
   }
 };
 </script>
 
-
-
 <style scoped>
-
 @import "../assets/css/nuevaFichaStyles.css";
 
-</style>
 
+</style>

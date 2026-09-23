@@ -95,6 +95,57 @@
   padding-bottom: 8px;
 }
 
+/* ====================================================================
+   ESTRUCTURA DE FORMULARIO Y GRILLA DE CAMPOS
+   ==================================================================== */
+.grilla-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.unica-columna {
+  grid-template-columns: 1fr;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo.expandido {
+  grid-column: 1 / -1;
+}
+
+.campo label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #1e293b;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+  outline: none;
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
 /* Botonera de Control de Pasos (Volver / Siguiente) */
 .contenedor-acciones-step {
   display: flex;
@@ -104,7 +155,7 @@
 }
 
 .btn-volver {
-  background-color: #64748b; /* Gris neutro para el retroceso */
+  background-color: #64748b;
   color: #ffffff;
   border: none;
   padding: 12px 26px;
@@ -113,7 +164,7 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  width: auto; /* Anula el 100% de la hoja base */
+  width: auto;
 }
 
 .btn-volver:hover:not(:disabled) {
@@ -121,7 +172,7 @@
 }
 
 .btn-siguiente {
-  background-color: #0284c7; /* Azul corporativo idéntico a tu modelo */
+  background-color: #0284c7;
   color: #ffffff;
   border: none;
   padding: 12px 30px;
@@ -130,19 +181,14 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  width: auto; /* Anula el 100% de la hoja base */
+  width: auto;
 }
 
 .btn-siguiente:hover:not(:disabled) {
   background-color: #0369a1;
 }
 
-/* Estructura para inputs en fila única como los Textareas */
-.unica-columna {
-  grid-template-columns: 1fr;
-}
-
-/* Animación sutil de entrada para suavizar las transiciones entre pantallas */
+/* Animación de entrada entre pasos */
 .animate-fade {
   animation: fadeIn 0.28s ease-in-out;
 }
@@ -185,4 +231,21 @@
   border: 1px solid #86efac;
   border-left: 5px solid #22c55e;
   color: #166534;
+}
+
+.notificacion-titulo {
+  margin: 0;
+  font-weight: 700;
+}
+
+.notificacion-lista {
+  margin: 8px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notificacion-lista li {
+  font-size: 0.88rem;
+  margin-top: 3px;
+  font-weight: 500;
 }
