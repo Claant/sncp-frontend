@@ -47,11 +47,11 @@
       </form>
     </section>
 
-    <!-- MENSAJES DE ERROR Y OPCIONES DE IMPORTACIÓN/REGISTRO INICIAL -->
+    <!-- MENSAJES DE ERROR, OPCIONES DE IMPORTACIÓN Y REGISTRO INICIAL -->
     <div v-if="mensajeError" class="alerta-clinica">
       <p class="texto-alerta-principal">{{ mensajeError }}</p>
       
-      <!-- Escenario C: Paciente solo existe en la BD externa (Importación por primera vez) -->
+      <!-- Escenario C: Paciente solo existe en la BD externa (Importación inicial) -->
       <div v-if="origenDatos === 'externo'" class="mt-2 contenedor-alerta-accion">
         <p class="texto-deteccion-destacado">
           📍 Se detectó un expediente clínico remoto en el <strong>CESFAM Las Compañías (La Serena)</strong>.
@@ -63,11 +63,11 @@
           class="btn-importar-fhir"
           :disabled="buscando"
         >
-          {{ buscando ? "Procesando..." : "Importar Expediente" }}
+          {{ buscando ? "Procesando..." : "Importar Expediente Completo" }}
         </button>
       </div>
 
-      <!-- Escenario A: Sin registros nacionales (Registro Exprés / Nueva Ficha) -->
+      <!-- Escenario A: Sin registros en la red asistencial (Registro Exprés) -->
       <div v-if="origenDatos === 'ninguno'" class="mt-2 contenedor-alerta-accion">
         <p class="small text-secondary mb-2">
           El paciente no registra historial clínico en centros médicos de la red pública ni privada.
@@ -82,20 +82,46 @@
       </div>
     </div>
 
-    <!-- RESULTADOS INTEGRADOS ESTILO LISTA COMPACTA FICHA PACIENTE -->
+    <!-- RESULTADOS INTEGRADOS FICHA PACIENTE -->
     <div v-if="paciente" class="resultado-clinico animate-fade">
 
-      <!-- CABECERA DEMOGRÁFICA DEL PACIENTE CON INTEGRACIÓN DE SMART MERGE -->
+      <!-- 📍 NUEVA ALERTA DE CONFIRMACIÓN MÉDICA PARA SMART MERGE (PACIENTE LOCAL CON ATENCIONES EXTERNAS PENDIENTES) -->
+      <div 
+        v-if="origenDatos === 'local_con_pendientes'" 
+        class="alerta-clinica alerta-fusion-pendiente animate-fade" 
+        style="margin-bottom: 20px; border-left: 5px solid #d97706; background-color: #fffbe0; padding: 15px; border-radius: 8px;"
+      >
+        <p class="texto-alerta-principal" style="color: #92400e; font-weight: 600; margin: 0;">
+          ⚠️ <strong>Atenciones Externas Pendientes de Sincronización:</strong>
+        </p>
+        <p class="small" style="color: #b45309; margin: 6px 0 12px 0;">
+          El paciente registra <strong>{{ atencionesPendientesCache.length }} consulta(s) reciente(s)</strong> en el <strong>CESFAM Las Compañías</strong> que aún no forman parte de esta ficha local. ¿Desea consolidar e importar las atenciones al expediente?
+        </p>
+        
+        <div class="contenedor-alerta-accion" style="display: flex; gap: 10px;">
+          <button
+            type="button"
+            @click="confirmarFusionIncremental"
+            class="btn-importar-fhir"
+            :disabled="buscando"
+            style="background-color: #d97706; border-color: #b45309;"
+          >
+            {{ buscando ? "Unificando..." : "🔄 Integrar e Importar Historial Extendido" }}
+          </button>
+        </div>
+      </div>
+
+      <!-- CABECERA DEMOGRÁFICA DEL PACIENTE -->
       <div class="tarjeta-paciente-cabecera contenedor-flex-cabecera">
         <div class="datos-cabecera-paciente">
           <h3>
             Paciente: {{ paciente.nombre }}
             
-            <!-- 🔄 BADGE INDICADOR DE RECONCILIACIÓN INCREMENTAL SMART MERGE -->
+            <!-- BADGE INDICADOR CUANDO LA FICHA YA FUE PREVIAMENTE UNIFICADA -->
             <span 
               v-if="origenDatos === 'local_unificado'" 
               class="badge-origen-fusion"
-              title="Historial unificado automáticamente con nuevas atenciones importadas desde la red externa"
+              title="Historial clínico unificado con eventos importados de la red externa"
             >
               🔄 Ficha Unificada (Smart Merge)
             </span>
@@ -131,7 +157,7 @@
         </div>
       </div>
 
-      <!-- FORMULARIO MODULARIZADO DESACOPLADO PARA PACIENTES EXISTENTES -->
+      <!-- FORMULARIO MODULARIZADO DESACOPLADO -->
       <FormularioNuevaAtencion
         v-if="formularioNuevaAtencionAbierto"
         :paciente-id="paciente._id"
@@ -157,7 +183,6 @@
         </div>
 
         <div v-else class="lista-atenciones-compacta">
-          <!-- Renderizamos la página actual del historial -->
           <div
             v-for="atencion in historialPaginado"
             :key="atencion._id"
@@ -170,15 +195,19 @@
                   formatearFecha(atencion.fecha)
                 }}</span>
               </div>
+
+              <!-- 📍 COLUMNA DE ESTABLECIMIENTO CON DETECCIÓN DINÁMICA DE RED EXTERNA -->
               <div class="columna-resumen-item">
                 <span class="etiqueta-columna-lista">Establecimiento</span>
                 <span class="valor-columna-lista highlight-centro">
                   {{
-                    atencion.usuario_id?.centro_salud_id?.nombre_centro ||
-                    "CESFAM Emilio Schaffhauser"
+                    atencion.motivo_consulta?.includes('[RED EXTERNA]')
+                      ? "CESFAM Las Compañías"
+                      : (atencion.usuario_id?.centro_salud_id?.nombre_centro || "CESFAM Emilio Schaffhauser")
                   }}
                 </span>
               </div>
+
               <div class="columna-resumen-item">
                 <span class="etiqueta-columna-lista">Motivo</span>
                 <span class="valor-columna-lista">{{
@@ -187,9 +216,8 @@
               </div>
             </div>
 
-            <!-- ACCIONES DE LA ATENCIÓN: ACORDEÓN REACTIVO E IMPRESIÓN DEL DAU OFICIAL -->
+            <!-- ACCIONES DE LA ATENCIÓN -->
             <div class="accion-atencion-lista" style="display: flex; gap: 10px; align-items: center;">
-              <!-- Botón 1: Expande el acordeón visual para ver CIE-10 y Bitácora en Vue -->
               <button
                 type="button"
                 @click="toggleFichaClinica(atencion)"
@@ -202,12 +230,11 @@
                 }}
               </button>
 
-              <!-- Botón 2: COMPONENTE ENCAPSULADO DE IMPRESIÓN PDF -->
               <PdfServiceDashboard :atencion-id="atencion._id" />
             </div>
           </div>
 
-          <!-- Controles de paginación del historial -->
+          <!-- CONTROLES DE PAGINACIÓN -->
           <div class="paginacion">
             <button @click="pagina--" :disabled="pagina === 1">Anterior</button>
             <span>Página {{ pagina }} de {{ totalPaginas }}</span>
@@ -278,7 +305,6 @@
                   }}</span>
                 </div>
 
-                <!-- Fila 2: Conclusión Patológica -->
                 <div class="fila-diagnostico-premium" style="margin-top: 10px">
                   <span class="etiqueta-diagnostico"
                     >Conclusión Patológica:</span
@@ -316,6 +342,9 @@
     
   </div>
 </template>
+
+
+
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -352,6 +381,7 @@ const diagnosticos = ref([]);
 
 // CACHÉ PERIMETRAL
 const fhirBundleExternoCache = ref(null);
+const atencionesPendientesCache = ref([]);
 
 // Paginadores locales
 const pagina = ref(1);
@@ -733,6 +763,37 @@ const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
     buscando.value = false;
   }
 };
+
+// 1. Variable para almacenar temporalmente los registros externos pendientes
+
+// 2. Función ejecutada cuando el médico presiona "Integrar e Importar Historial Extendido"
+const confirmarFusionIncremental = async () => {
+  if (!paciente.value?._id || atencionesPendientesCache.value.length === 0) return;
+  buscando.value = true;
+
+  try {
+    const resSync = await authStore.fetchSeguro("/expedientes/sincronizar-atenciones", {
+      method: "POST",
+      body: JSON.stringify({
+        paciente_id: paciente.value._id,
+        atencionesExternas: atencionesPendientesCache.value
+      })
+    });
+
+    if (resSync && resSync.ok) {
+      alert("✅ Ficha unificada: Las atenciones externas fueron integradas exitosamente.");
+      atencionesPendientesCache.value = [];
+      await consultarSistemaNacional(); // Refresca los resultados de la búsqueda
+    }
+  } catch (error) {
+    console.error("⚠️ Error en sincronización asistida:", error);
+  } finally {
+    buscando.value = false;
+  }
+};
+
+
+
 </script>
 
 
