@@ -85,7 +85,7 @@
     <!-- RESULTADOS INTEGRADOS FICHA PACIENTE -->
     <div v-if="paciente" class="resultado-clinico animate-fade">
 
-      <!-- 📍 NUEVA ALERTA DE CONFIRMACIÓN MÉDICA PARA SMART MERGE (PACIENTE LOCAL CON ATENCIONES EXTERNAS PENDIENTES) -->
+      <!-- 📍 ALERTA DE CONFIRMACIÓN MÉDICA PARA SMART MERGE (PACIENTE LOCAL CON ATENCIONES EXTERNAS PENDIENTES) -->
       <div 
         v-if="origenDatos === 'local_con_pendientes'" 
         class="alerta-clinica alerta-fusion-pendiente animate-fade" 
@@ -343,8 +343,6 @@
   </div>
 </template>
 
-
-
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -369,7 +367,7 @@ const mensajeError = ref(null);
 const componenteKey = ref(0);
 
 // CONTROL INTERACTIVO DE PASARELA
-const origenDatos = ref("none"); // 'local', 'externo', 'ninguno'
+const origenDatos = ref("none"); // 'local', 'externo', 'ninguno', 'local_unificado', 'local_con_pendientes'
 const pacienteIdExternoContingencia = ref(null);
 
 // Contenedores atómicos
@@ -379,7 +377,7 @@ const atencionSeleccionada = ref(null);
 const bitacoraAccesos = ref([]);
 const diagnosticos = ref([]);
 
-// CACHÉ PERIMETRAL
+// CACHÉ PERIMETRAL Y PENDIENTES DE SMART MERGE
 const fhirBundleExternoCache = ref(null);
 const atencionesPendientesCache = ref([]);
 
@@ -402,13 +400,11 @@ const formatearFechaHora = (stringFecha) => {
 // FUNCIONES Y MANEJO DE FORMATO DE RUT
 // ====================================================================
 
-// 1. Limpia cualquier carácter que no sea número o letra K
 const obtenerRutLimpio = (val) => {
   if (!val) return '';
   return val.replace(/[^0-9kK]/g, '').toUpperCase();
 };
 
-// 2. Transforma una cadena pura a formato chileno (XX.XXX.XXX-X)
 const aplicarFormatoRut = (val) => {
   let limpio = obtenerRutLimpio(val);
 
@@ -425,7 +421,6 @@ const aplicarFormatoRut = (val) => {
   return `${cuerpoConPuntos}-${dv}`;
 };
 
-// 3. Escuchador en vivo del evento @input para la interfaz HTML
 const formatearRutEnVivo = (e) => {
   if (!e || !e.target) return;
   const formateado = aplicarFormatoRut(e.target.value);
@@ -471,6 +466,7 @@ const consultarSistemaNacional = async () => {
   bitacoraAccesos.value = [];
   pacienteIdExternoContingencia.value = null;
   fhirBundleExternoCache.value = null;
+  atencionesPendientesCache.value = [];
   origenDatos.value = "none";
   cerrarFichaClinica();
   formularioNuevaAtencionAbierto.value = false;
@@ -478,25 +474,34 @@ const consultarSistemaNacional = async () => {
   try {
     const rutSanitizado = aplicarFormatoRut(rutBusqueda.value);
     
-    // Consulta a la pasarela de la API REST con Smart Merge incorporado
+    // Consulta a la API REST de Expedientes
     const resBusqueda = await authStore.fetchSeguro(`/pacientes/${rutSanitizado}`);
     if (!resBusqueda) return;
     
     const datosPac = await resBusqueda.json();
     origenDatos.value = datosPac.origen || "none";
 
-    // ESCENARIO A: Sin registros en ningún centro
+    // ESCENARIO A: Paciente no existe en ningún centro
     if (!resBusqueda.ok || datosPac.origen === "ninguno") {
       origenDatos.value = "ninguno";
       throw new Error(datosPac.msg || "El RUT ingresado no está registrado en este centro de salud ni en la red externa.");
     }
 
-    // ESCENARIO B: Paciente LOCAL (incluye 'local' y 'local_unificado' por Smart Merge)
-    if (datosPac.origen === "local" || datosPac.origen === "local_unificado") {
+    // ESCENARIO B: Paciente LOCAL (Soporta 'local', 'local_unificado' y 'local_con_pendientes')
+    if (
+      datosPac.origen === "local" || 
+      datosPac.origen === "local_unificado" || 
+      datosPac.origen === "local_con_pendientes"
+    ) {
       const fhirBundle = datosPac.fhirBundle;
-      
+
+      // Almacenamos consultas pendientes si la API detectó diferencias
+      if (datosPac.origen === "local_con_pendientes") {
+        atencionesPendientesCache.value = datosPac.atencionesPendientes || [];
+      }
+
       if (fhirBundle && fhirBundle.entry) {
-        // 1. Extraer paciente
+        // Extraer datos del paciente desde el recurso 'Patient' de FHIR
         const entradaPatient = fhirBundle.entry.find(e => e.resource?.resourceType === "Patient");
         if (entradaPatient) {
           paciente.value = {
@@ -507,7 +512,7 @@ const consultarSistemaNacional = async () => {
           };
         }
 
-        // 2. Extraer historial completo (atenciones locales + atenciones recién integradas del Smart Merge)
+        // Extraer historial desde los recursos 'Encounter'
         historial.value = fhirBundle.entry
           .filter(e => e.resource?.resourceType === "Encounter")
           .map(e => ({
@@ -521,18 +526,14 @@ const consultarSistemaNacional = async () => {
       }
 
       pagina.value = 1;
-  
-      // Si ocurrió una fusión incremental, desplegamos un aviso sutil de confirmación
-      if (datosPac.origen === "local_unificado") {
-        console.log("ℹ️ Expediente unificado automáticamente mediante Smart Merge.");
-      }
 
+      // Registrar auditoría forense del acceso a la ficha
       if (paciente.value?._id) {
         await registrarAuditoriaForense(paciente.value._id, null);
       }
     }
     
-    // ESCENARIO C: Paciente solo existe EXTERNAMENTE (Primera importación completa)
+    // ESCENARIO C: Registro puramente EXTERNO (Primera vez que se trae al paciente)
     else if (datosPac.origen === "externo") {
       fhirBundleExternoCache.value = datosPac.fhirBundle;
       const entradaPatientRemoto = datosPac.fhirBundle?.entry?.find(e => e.resource?.resourceType === "Patient");
@@ -549,6 +550,7 @@ const consultarSistemaNacional = async () => {
     bitacoraAccesos.value = [];
     pacienteIdExternoContingencia.value = null;
     fhirBundleExternoCache.value = null;
+    atencionesPendientesCache.value = [];
   } finally {
     buscando.value = false;
   }
@@ -673,6 +675,35 @@ const ejecutarImportacionFHIRDesdeDashboard = async () => {
   }
 };
 
+const confirmarFusionIncremental = async () => {
+  if (!paciente.value?._id || atencionesPendientesCache.value.length === 0) return;
+  buscando.value = true;
+
+  try {
+    const resSync = await authStore.fetchSeguro("/expedientes/sincronizar-atenciones", {
+      method: "POST",
+      body: JSON.stringify({
+        paciente_id: paciente.value._id,
+        atencionesExternas: atencionesPendientesCache.value
+      })
+    });
+
+    if (resSync && resSync.ok) {
+      alert("✅ Ficha unificada: Las atenciones externas fueron integradas exitosamente al expediente local.");
+      atencionesPendientesCache.value = [];
+      await consultarSistemaNacional();
+    } else {
+      const errData = await resSync.json();
+      alert(`⚠️ No se pudo sincronizar: ${errData.msg || "Error en el servidor"}`);
+    }
+  } catch (error) {
+    console.error("⚠️ Error en sincronización asistida:", error);
+    alert(`⚠️ Error de red al sincronizar: ${error.message}`);
+  } finally {
+    buscando.value = false;
+  }
+};
+
 const ejecutarGuardadoDesdeDashboard = async (payload) => {
   guardandoNuevaConsulta.value = true;
   try {
@@ -738,8 +769,6 @@ watch(
   { immediate: true },
 );
 
-
-
 const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
   if (!pacienteId) return;
   try {
@@ -763,43 +792,10 @@ const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
     buscando.value = false;
   }
 };
-
-// 1. Variable para almacenar temporalmente los registros externos pendientes
-
-// 2. Función ejecutada cuando el médico presiona "Integrar e Importar Historial Extendido"
-const confirmarFusionIncremental = async () => {
-  if (!paciente.value?._id || atencionesPendientesCache.value.length === 0) return;
-  buscando.value = true;
-
-  try {
-    const resSync = await authStore.fetchSeguro("/expedientes/sincronizar-atenciones", {
-      method: "POST",
-      body: JSON.stringify({
-        paciente_id: paciente.value._id,
-        atencionesExternas: atencionesPendientesCache.value
-      })
-    });
-
-    if (resSync && resSync.ok) {
-      alert("✅ Ficha unificada: Las atenciones externas fueron integradas exitosamente.");
-      atencionesPendientesCache.value = [];
-      await consultarSistemaNacional(); // Refresca los resultados de la búsqueda
-    }
-  } catch (error) {
-    console.error("⚠️ Error en sincronización asistida:", error);
-  } finally {
-    buscando.value = false;
-  }
-};
-
-
-
 </script>
-
-
-
-
 
 <style scoped>
 @import "../assets/css/dashboardStyles.css";
+
+
 </style>
