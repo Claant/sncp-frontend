@@ -674,13 +674,13 @@ const ejecutarImportacionFHIRDesdeDashboard = async () => {
     buscando.value = false;
   }
 };
-
 const confirmarFusionIncremental = async () => {
   if (!paciente.value?._id || atencionesPendientesCache.value.length === 0) return;
   buscando.value = true;
 
   try {
-    const resSync = await authStore.fetchSeguro("/expedientes/sincronizar-atenciones", {
+    // 📍 PREFIJO CORRECTO: /api/pacientes/sincronizar-atenciones
+    const resSync = await authStore.fetchSeguro("/api/pacientes/sincronizar-atenciones", {
       method: "POST",
       body: JSON.stringify({
         paciente_id: paciente.value._id,
@@ -688,21 +688,31 @@ const confirmarFusionIncremental = async () => {
       })
     });
 
-    if (resSync && resSync.ok) {
+    if (!resSync) return;
+
+    // Validación para evitar parsear HTML de error en caso de fallo
+    const contentType = resSync.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new Error(`El servidor devolvió una respuesta no válida (HTTP ${resSync.status}).`);
+    }
+
+    const datosRes = await resSync.json();
+
+    if (resSync.ok) {
       alert("✅ Ficha unificada: Las atenciones externas fueron integradas exitosamente al expediente local.");
       atencionesPendientesCache.value = [];
-      await consultarSistemaNacional();
+      await consultarSistemaNacional(); // Refresca la vista
     } else {
-      const errData = await resSync.json();
-      alert(`⚠️ No se pudo sincronizar: ${errData.msg || "Error en el servidor"}`);
+      alert(`⚠️ No se pudo sincronizar: ${datosRes.msg || "Error en el servidor"}`);
     }
   } catch (error) {
-    console.error("⚠️ Error en sincronización asistida:", error);
-    alert(`⚠️ Error de red al sincronizar: ${error.message}`);
+    console.error("⚠️ Error en sincronización asistida:", error.message);
+    alert(`⚠️ Error en sincronización: ${error.message}`);
   } finally {
     buscando.value = false;
   }
 };
+
 
 const ejecutarGuardadoDesdeDashboard = async (payload) => {
   guardandoNuevaConsulta.value = true;
