@@ -5,94 +5,101 @@
     <header class="dashboard-header">
       <h2>Consulta de ficha clínica por RUT</h2>
       <p>
-        Búsqueda en la base de datos local y despliegue historico de las
-        consultas medicas
+        Búsqueda en la base de datos local y despliegue histórico de las
+        consultas médicas
       </p>
     </header>
 
+    <!-- BUSCADOR PRINCIPAL POR RUT -->
+    <section v-if="!route.params.id" class="seccion-busqueda">
+      <form @submit.prevent="evaluarCriterioBusqueda" class="formulario-busqueda">
+        <div class="grupo-busqueda">
+          <label for="rut-buscar">Ingrese RUT del Paciente</label>
+          <div class="entrada-boton">
+            
+            <div class="caja-input">
+              <input
+                id="rut-buscar"
+                type="text"
+                v-model="rutBusqueda"
+                @input="formatearRutEnVivo"
+                placeholder="Ej: 12.345.678-K"
+                maxlength="12"
+                required
+                :disabled="buscando"
+              />
 
-<!-- BUSCADOR PRINCIPAL POR RUT -->
-<section v-if="!route.params.id" class="seccion-busqueda">
-  <form @submit.prevent="evaluarCriterioBusqueda" class="formulario-busqueda">
-    <div class="grupo-busqueda">
-      <label for="rut-buscar">Ingrese RUT del Paciente</label>
-      <div class="entrada-boton">
-        
-        <div class="caja-input">
-          <input
-            id="rut-buscar"
-            type="text"
-            v-model="rutBusqueda"
-            @input="formatearRutEnVivo"
-            placeholder="Ej: 12.345.678-K"
-            maxlength="12"
-            required
-            :disabled="buscando"
-          />
-
-          <button
-            v-if="rutBusqueda && !buscando"
-            type="button"
-            class="btn-limpiar"
-            @click="rutBusqueda = ''"
-          >
-            &#x2715;
-          </button>
+              <button
+                v-if="rutBusqueda && !buscando"
+                type="button"
+                class="btn-limpiar"
+                @click="rutBusqueda = ''"
+              >
+                &#x2715;
+              </button>
+            </div>
+            
+            <button type="submit" :disabled="buscando" class="btn-buscar">
+              {{ buscando ? "Buscando..." : "Consultar Ficha" }}
+            </button>
+          </div>
         </div>
+      </form>
+    </section>
+
+    <!-- MENSAJES DE ERROR Y OPCIONES DE IMPORTACIÓN/REGISTRO INICIAL -->
+    <div v-if="mensajeError" class="alerta-clinica">
+      <p class="texto-alerta-principal">{{ mensajeError }}</p>
+      
+      <!-- Escenario C: Paciente solo existe en la BD externa (Importación por primera vez) -->
+      <div v-if="origenDatos === 'externo'" class="mt-2 contenedor-alerta-accion">
+        <p class="texto-deteccion-destacado">
+          📍 Se detectó un expediente clínico remoto en el <strong>CESFAM Las Compañías (La Serena)</strong>.
+        </p>
         
-        <button type="submit" :disabled="buscando" class="btn-buscar">
-          {{ buscando ? "Buscando..." : "Consultar Ficha" }}
+        <button
+          type="button"
+          @click="ejecutarImportacionFHIRDesdeDashboard"
+          class="btn-importar-fhir"
+          :disabled="buscando"
+        >
+          {{ buscando ? "Procesando..." : "Importar Expediente" }}
+        </button>
+      </div>
+
+      <!-- Escenario A: Sin registros nacionales (Registro Exprés / Nueva Ficha) -->
+      <div v-if="origenDatos === 'ninguno'" class="mt-2 contenedor-alerta-accion">
+        <p class="small text-secondary mb-2">
+          El paciente no registra historial clínico en centros médicos de la red pública ni privada.
+        </p>
+        <button
+          type="button"
+          @click="redirigirAlRegistroExpress"
+          class="btn-importar-fhir"
+        >
+          Registrar nueva ficha clínica
         </button>
       </div>
     </div>
-  </form>
-</section>
 
-
-
-   <!-- MENSAJES DE ERROR Y OPCIONES DE IMPORTACIÓN/REGISTRO -->
-<div v-if="mensajeError" class="alerta-clinica">
-  <p class="texto-alerta-principal">{{ mensajeError }}</p>
-  
-  <div v-if="origenDatos === 'externo'" class="mt-2 contenedor-alerta-accion">
-    <!-- Texto informativo más destacado -->
-    <p class="texto-deteccion-destacado">
-      📍 Se detectó un expediente clínico remoto en el <strong>CESFAM Las Compañías (La Serena)</strong>.
-    </p>
-    
-    <!-- Botón con dimensiones compactas y color institucional -->
-    <button
-      type="button"
-      @click="ejecutarImportacionFHIRDesdeDashboard"
-      class="btn-importar-fhir"
-      :disabled="buscando"
-    >
-      {{ buscando ? "Procesando..." : "Importar Expediente" }}
-    </button>
-  </div>
-
-  <!-- Escenario A: Sin registros nacionales (Registro Expres / Nueva Ficha) -->
-  <div v-if="origenDatos === 'ninguno'" class="mt-2 contenedor-alerta-accion">
-    <p class="small text-secondary mb-2">
-      El paciente no registra historial clínico en centros médicos de la red pública ni privada.
-    </p>
-    <button
-      type="button"
-      @click="redirigirAlRegistroExpress"
-      class="btn-importar-fhir"
-    >
-      Registrar nueva ficha clínica
-    </button>
-  </div>
-</div>
-
-    <!-- RESULTADOS INTEGRADOS ESTILO LISTA COMPACTA FICHA PACIENTE-->
+    <!-- RESULTADOS INTEGRADOS ESTILO LISTA COMPACTA FICHA PACIENTE -->
     <div v-if="paciente" class="resultado-clinico animate-fade">
 
-      <!-- CABECERA DEMOGRÁFICA DEL PACIENTE -->
+      <!-- CABECERA DEMOGRÁFICA DEL PACIENTE CON INTEGRACIÓN DE SMART MERGE -->
       <div class="tarjeta-paciente-cabecera contenedor-flex-cabecera">
         <div class="datos-cabecera-paciente">
-          <h3>Paciente: {{ paciente.nombre }}</h3>
+          <h3>
+            Paciente: {{ paciente.nombre }}
+            
+            <!-- 🔄 BADGE INDICADOR DE RECONCILIACIÓN INCREMENTAL SMART MERGE -->
+            <span 
+              v-if="origenDatos === 'local_unificado'" 
+              class="badge-origen-fusion"
+              title="Historial unificado automáticamente con nuevas atenciones importadas desde la red externa"
+            >
+              🔄 Ficha Unificada (Smart Merge)
+            </span>
+          </h3>
           <p>
             <strong>RUT:</strong> {{ paciente.rut }} |
             <strong>Fecha Nacimiento:</strong> {{ paciente.fecha_nacimiento }}
@@ -131,7 +138,6 @@
         :guardando="guardandoNuevaConsulta"
         @guardar-atencion="ejecutarGuardadoDesdeDashboard"
       />
-
 
       <!-- HISTORIAL CLÍNICO CRONOLÓGICO PAGINADO -->
       <article
@@ -197,7 +203,7 @@
               </button>
 
               <!-- Botón 2: COMPONENTE ENCAPSULADO DE IMPRESIÓN PDF -->
-                <PdfServiceDashboard :atencion-id="atencion._id" />
+              <PdfServiceDashboard :atencion-id="atencion._id" />
             </div>
           </div>
 
@@ -249,7 +255,7 @@
               {{ atencionSeleccionada.motivo_consulta }}
             </p>
 
-            <!-- 🔹 BLOQUE DE DIAGNÓSTICO CIE-10 -->
+            <!-- BLOQUE DE DIAGNÓSTICO CIE-10 -->
             <div
               v-if="diagnosticos && diagnosticos.length"
               class="cuadro-diagnostico-cie10 animate-fade"
@@ -272,7 +278,7 @@
                   }}</span>
                 </div>
 
-                <!-- Fila 2: Conclusión Patológica en el mismo eje -->
+                <!-- Fila 2: Conclusión Patológica -->
                 <div class="fila-diagnostico-premium" style="margin-top: 10px">
                   <span class="etiqueta-diagnostico"
                     >Conclusión Patológica:</span
@@ -285,30 +291,22 @@
               Cargando conclusiones patológicas desde Atlas...
             </div>
 
-
-
-
-          <!-- BITÁCORA LEGAL DE AUDITORÍA DE ACCESOS ENCAPSULADA -->
-<BitacoraAuditoria 
-  :bitacora="bitacoraAccesos" 
-  :formatear-fecha-hora="formatearFechaHora" 
-/>
-
+            <!-- BITÁCORA LEGAL DE AUDITORÍA DE ACCESOS ENCAPSULADA -->
+            <BitacoraAuditoria 
+              :bitacora="bitacoraAccesos" 
+              :formatear-fecha-hora="formatearFechaHora" 
+            />
 
           </div>
         </div>
       </article>
-
-
 
       <!-- AVISO DE PRIVACIDAD PARA ADMINISTRADORES -->
       <div
         v-else-if="authStore.obtenerRol === 'administrador'"
         class="aviso-privacidad animate-fade"
       >
-        <strong
-          >Aviso de Confidencialidad (Ley de Derechos del Paciente):</strong
-        >
+        <strong>Aviso de Confidencialidad (Ley de Derechos del Paciente):</strong>
         Su perfil institucional (Administrador) le autoriza exclusivamente a
         gestionar los RR HH del personal de salud y al alta de infraestructura de centros de salud. 
         Las fichas médicas y códigos de diagnóstico CIE-10 se encuentran restringidos para personal
@@ -450,24 +448,25 @@ const consultarSistemaNacional = async () => {
   try {
     const rutSanitizado = aplicarFormatoRut(rutBusqueda.value);
     
-    // Consulta a la pasarela híbrida
+    // Consulta a la pasarela de la API REST con Smart Merge incorporado
     const resBusqueda = await authStore.fetchSeguro(`/pacientes/${rutSanitizado}`);
     if (!resBusqueda) return;
     
     const datosPac = await resBusqueda.json();
     origenDatos.value = datosPac.origen || "none";
 
-    // Escenario A: No registrado
+    // ESCENARIO A: Sin registros en ningún centro
     if (!resBusqueda.ok || datosPac.origen === "ninguno") {
       origenDatos.value = "ninguno";
-      throw new Error(datosPac.msg || "El RUT ingresado no está registrado en este centro de salud ni tampoco en otro recinto de salud externo");
+      throw new Error(datosPac.msg || "El RUT ingresado no está registrado en este centro de salud ni en la red externa.");
     }
 
-    // Escenario B: Registro LOCAL
-    if (datosPac.origen === "local") {
+    // ESCENARIO B: Paciente LOCAL (incluye 'local' y 'local_unificado' por Smart Merge)
+    if (datosPac.origen === "local" || datosPac.origen === "local_unificado") {
       const fhirBundle = datosPac.fhirBundle;
+      
       if (fhirBundle && fhirBundle.entry) {
-        
+        // 1. Extraer paciente
         const entradaPatient = fhirBundle.entry.find(e => e.resource?.resourceType === "Patient");
         if (entradaPatient) {
           paciente.value = {
@@ -478,6 +477,7 @@ const consultarSistemaNacional = async () => {
           };
         }
 
+        // 2. Extraer historial completo (atenciones locales + atenciones recién integradas del Smart Merge)
         historial.value = fhirBundle.entry
           .filter(e => e.resource?.resourceType === "Encounter")
           .map(e => ({
@@ -492,19 +492,23 @@ const consultarSistemaNacional = async () => {
 
       pagina.value = 1;
   
+      // Si ocurrió una fusión incremental, desplegamos un aviso sutil de confirmación
+      if (datosPac.origen === "local_unificado") {
+        console.log("ℹ️ Expediente unificado automáticamente mediante Smart Merge.");
+      }
+
       if (paciente.value?._id) {
         await registrarAuditoriaForense(paciente.value._id, null);
       }
     }
     
-    // Escenario C: Registro EXTERNO
+    // ESCENARIO C: Paciente solo existe EXTERNAMENTE (Primera importación completa)
     else if (datosPac.origen === "externo") {
       fhirBundleExternoCache.value = datosPac.fhirBundle;
-
       const entradaPatientRemoto = datosPac.fhirBundle?.entry?.find(e => e.resource?.resourceType === "Patient");
       pacienteIdExternoContingencia.value = entradaPatientRemoto?.resource?.id || "contingencia-remota";
       
-      mensajeError.value = `El RUT ${rutSanitizado} no posee registros clínicos en este CESFAM.`;
+      mensajeError.value = `El RUT ${rutSanitizado} no posee registros locales en este CESFAM, pero se halló un expediente remoto.`;
     }
 
   } catch (error) {
@@ -704,6 +708,8 @@ watch(
   { immediate: true },
 );
 
+
+
 const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
   if (!pacienteId) return;
   try {
@@ -728,6 +734,10 @@ const registrarAuditoriaForense = async (pacienteId, atencionId = null) => {
   }
 };
 </script>
+
+
+
+
 
 <style scoped>
 @import "../assets/css/dashboardStyles.css";
