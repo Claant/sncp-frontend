@@ -680,7 +680,7 @@ const confirmarFusionIncremental = async () => {
 
   try {
     // 📍 PREFIJO CORRECTO: /api/pacientes/sincronizar-atenciones
-    const resSync = await authStore.fetchSeguro("/api/pacientes/sincronizar-atenciones", {
+    const resSync = await authStore.fetchSeguro("/pacientes/sincronizar-atenciones", {
       method: "POST",
       body: JSON.stringify({
         paciente_id: paciente.value._id,
