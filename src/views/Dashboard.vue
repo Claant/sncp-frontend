@@ -407,13 +407,15 @@ const obtenerRutLimpio = (val) => {
 
 const aplicarFormatoRut = (val) => {
   let limpio = obtenerRutLimpio(val);
-
+  // MAXIMO 9 CARACTERES, SI ESCRIBEN MAS SE DESCARTAN
   if (limpio.length > 9) {
     limpio = limpio.slice(0, 9);
   }
 
-  if (limpio.length <= 1) return limpio;
-
+  // MÍNIMO 8 CARACTERES, SI TIENE MENOS DE 8 DEVUELVE EL TEXTO LIMPIO SIN PUNTOS NI GUION
+  if (limpio.length < 8) {
+    return limpio;
+  }
   const cuerpo = limpio.slice(0, -1);
   const dv = limpio.slice(-1);
   const cuerpoConPuntos = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -458,6 +460,16 @@ const evaluarCriterioBusqueda = async () => {
 };
 
 const consultarSistemaNacional = async () => {
+  // 1. Extraemos solo los caracteres válidos para comprobar el mínimo
+  const soloCaracteres = rutBusqueda.value.replace(/[^0-9kK]/g, '');
+
+  // Bloquea la consulta si el usuario no ha ingresado al menos 8 caracteres (RUT mínimo válido)
+  if (soloCaracteres.length < 8) {
+    mensajeError.value = "Por favor, ingrese un RUT válido (mínimo 8 caracteres).";
+    return;
+  }
+
+  // 2. Limpieza de estados de la vista
   buscando.value = true;
   mensajeError.value = null;
   paciente.value = null;
@@ -472,22 +484,21 @@ const consultarSistemaNacional = async () => {
   formularioNuevaAtencionAbierto.value = false;
 
   try {
-    const rutSanitizado = aplicarFormatoRut(rutBusqueda.value);
-    
-    // Consulta a la API REST de Expedientes
-    const resBusqueda = await authStore.fetchSeguro(`/pacientes/${rutSanitizado}`);
+    // 3. Enviamos 'rutBusqueda.value' (con puntos y guión); el backend aplica 'limpiarRut' internamente
+    const resBusqueda = await authStore.fetchSeguro(`/pacientes/${encodeURIComponent(rutBusqueda.value)}`);
     if (!resBusqueda) return;
-    
-    const datosPac = await resBusqueda.json();
-    origenDatos.value = datosPac.origen || "none";
 
-    // ESCENARIO A: Paciente no existe en ningún centro
+    const datosPac = await resBusqueda.json();
+
+    // ESCENARIO A: Paciente no existe o error en la búsqueda
     if (!resBusqueda.ok || datosPac.origen === "ninguno") {
       origenDatos.value = "ninguno";
       throw new Error(datosPac.msg || "El RUT ingresado no está registrado en este centro de salud ni en la red externa.");
     }
 
-    // ESCENARIO B: Paciente LOCAL (Soporta 'local', 'local_unificado' y 'local_con_pendientes')
+    origenDatos.value = datosPac.origen || "none";
+
+    // ESCENARIO B: Paciente LOCAL
     if (
       datosPac.origen === "local" || 
       datosPac.origen === "local_unificado" || 
@@ -495,24 +506,23 @@ const consultarSistemaNacional = async () => {
     ) {
       const fhirBundle = datosPac.fhirBundle;
 
-      // Almacenamos consultas pendientes si la API detectó diferencias
       if (datosPac.origen === "local_con_pendientes") {
         atencionesPendientesCache.value = datosPac.atencionesPendientes || [];
       }
 
-      if (fhirBundle && fhirBundle.entry) {
-        // Extraer datos del paciente desde el recurso 'Patient' de FHIR
+      if (fhirBundle?.entry) {
+        // Extraer demográficos de 'Patient'
         const entradaPatient = fhirBundle.entry.find(e => e.resource?.resourceType === "Patient");
         if (entradaPatient) {
           paciente.value = {
             _id: entradaPatient.resource.id,
             nombre: entradaPatient.resource.name?.[0]?.text || "Paciente Registrado",
-            rut: entradaPatient.resource.identifier?.[0]?.value || rutSanitizado,
+            rut: entradaPatient.resource.identifier?.[0]?.value || rutBusqueda.value,
             fecha_nacimiento: entradaPatient.resource.birthDate ? formatearFecha(entradaPatient.resource.birthDate) : "N/A"
           };
         }
 
-        // Extraer historial desde los recursos 'Encounter'
+        // Extraer historial de 'Encounter'
         historial.value = fhirBundle.entry
           .filter(e => e.resource?.resourceType === "Encounter")
           .map(e => ({
@@ -527,19 +537,19 @@ const consultarSistemaNacional = async () => {
 
       pagina.value = 1;
 
-      // Registrar auditoría forense del acceso a la ficha
+      // Registrar auditoría forense
       if (paciente.value?._id) {
         await registrarAuditoriaForense(paciente.value._id, null);
       }
     }
     
-    // ESCENARIO C: Registro puramente EXTERNO (Primera vez que se trae al paciente)
+    // ESCENARIO C: Registro EXTERNO
     else if (datosPac.origen === "externo") {
       fhirBundleExternoCache.value = datosPac.fhirBundle;
       const entradaPatientRemoto = datosPac.fhirBundle?.entry?.find(e => e.resource?.resourceType === "Patient");
       pacienteIdExternoContingencia.value = entradaPatientRemoto?.resource?.id || "contingencia-remota";
       
-      mensajeError.value = `El RUT ${rutSanitizado} no posee registros locales en este CESFAM, pero se halló un expediente remoto.`;
+      mensajeError.value = `El RUT ${rutBusqueda.value} no posee registros locales en este CESFAM, pero se halló un expediente remoto.`;
     }
 
   } catch (error) {
@@ -561,6 +571,7 @@ const cerrarFichaClinica = () => {
   diagnosticos.value = [];
   bitacoraAccesos.value = [];
 };
+
 
 const cargarFichaPorIdDirecto = async (pacienteId) => {
   buscando.value = true;
@@ -621,6 +632,7 @@ const toggleFichaClinica = async (atencion) => {
   }
 };
 
+
 const ejecutarImportacionFHIRDesdeDashboard = async () => {
   if (!fhirBundleExternoCache.value) return;
   buscando.value = true;
@@ -674,6 +686,8 @@ const ejecutarImportacionFHIRDesdeDashboard = async () => {
     buscando.value = false;
   }
 };
+
+
 const confirmarFusionIncremental = async () => {
   if (!paciente.value?._id || atencionesPendientesCache.value.length === 0) return;
   buscando.value = true;

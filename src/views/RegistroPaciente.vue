@@ -127,6 +127,7 @@ const direccion = reactive({
 
 let timeoutAlerta = null;
 
+
 const lanzarAlertaLocal = (texto, tipo) => {
   if (timeoutAlerta) clearTimeout(timeoutAlerta);
   notificacion.texto = texto;
