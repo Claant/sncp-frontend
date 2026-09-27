@@ -413,7 +413,7 @@ const aplicarFormatoRut = (val) => {
   }
 
   // MÍNIMO 8 CARACTERES, SI TIENE MENOS DE 8 DEVUELVE EL TEXTO LIMPIO SIN PUNTOS NI GUION
-  if (limpio.length < 8) {
+  if (limpio.length < 1) {
     return limpio;
   }
   const cuerpo = limpio.slice(0, -1);
