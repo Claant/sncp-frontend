@@ -23,7 +23,7 @@
 
       <form @submit.prevent="procesarAcceso" class="formulario-acceso">
         <div class="grupo-entrada">
-          <label for="correo">Correo Electrónico Institucional</label>
+          <label for="correo">Correo Electrónico Institucional (carlos@adminstrativo.cl para modulo administrativo y ana@medico.cl para modulo medico) </label>
           <input 
             id="correo"
             type="email" 
@@ -35,7 +35,7 @@
         </div>
 
         <div class="grupo-entrada">
-          <label for="contrasena">Contraseña de Acceso</label>
+          <label for="contrasena">Contraseña de Acceso (PARA AMBOS PERFILES DIGITAR 123) </label>
           <input 
             id="contrasena"
             type="password" 
